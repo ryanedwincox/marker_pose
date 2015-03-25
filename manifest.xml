@@ -1,0 +1,19 @@
+<package>
+  <description brief="marker_pose">
+
+     marker_pose
+
+  </description>
+  <author>Underwater Haptics 1</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/marker_pose</url>
+  <depend package="std_msgs"/>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="tf"/>
+  <depend package="rviz"/>
+
+</package>
+
+
