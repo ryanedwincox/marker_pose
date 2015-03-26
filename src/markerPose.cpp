@@ -27,7 +27,7 @@ cv::Point runKalmanFilter(cv::KalmanFilter KF, cv::Point statePt, std::list<cv::
 std::list<HoldPoint> mergesort(std::list<HoldPoint> H);
 std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::Mat tvec, int w, int h);
-void publishCameraTF(cv::Mat rvec, cv::Mat tvec);
+void publishCameraTF(cv::Mat rMat, cv::Mat tvec);
 void publishMarkerTF();
 
 int main(int argc, char *argv[])
@@ -64,6 +64,14 @@ int main(int argc, char *argv[])
 
     cv::Mat rvec(3,1,cv::DataType<double>::type);
     cv::Mat tvec(3,1,cv::DataType<double>::type);
+
+    rvec.at<double>(0) = 3.148783393059644;
+    rvec.at<double>(1) = -0.06469964154880868;
+    rvec.at<double>(2) = 0.3592252022868849;
+
+    tvec.at<double>(0) = -0.07643506669466804;
+    tvec.at<double>(1) = 0.1789476935464252;
+    tvec.at<double>(2) = 1.403211831154492;
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 
@@ -144,7 +152,7 @@ int main(int argc, char *argv[])
 
         // publish tf
         publishMarkerTF();
-        publishCameraTF(rvecCam, tvecCam);
+        publishCameraTF(rMatTrans, tvecCam);
 
 
 
@@ -162,14 +170,21 @@ int main(int argc, char *argv[])
     }
 }
 
-void publishCameraTF(cv::Mat rvec, cv::Mat tvec)
+void publishCameraTF(cv::Mat rMat, cv::Mat tvec)
 {
+    tfScalar m00 = rMat.at<double>(0,0); tfScalar m01 = rMat.at<double>(0,1); tfScalar m02 = rMat.at<double>(0,2);
+    tfScalar m10 = rMat.at<double>(1,0); tfScalar m11 = rMat.at<double>(1,1); tfScalar m12 = rMat.at<double>(1,2);
+    tfScalar m20 = rMat.at<double>(2,0); tfScalar m21 = rMat.at<double>(2,1); tfScalar m22 = rMat.at<double>(2,2);
+    tf::Matrix3x3 rotMat(m00,m01,m02,
+                    m10,m11,m12,
+                    m20,m21,m22);
+
     static tf::TransformBroadcaster br;
-    tf::Transform transform;
-    transform.setOrigin(tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
-    tf::Quaternion q;
-    q.setRPY(rvec.at<double>(0), -rvec.at<double>(2), rvec.at<double>(1)); // GBR
-    transform.setRotation(q);
+    tf::Transform transform(rotMat, tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
+//    transform.setOrigin(tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
+//    tf::Quaternion q;
+//    q.setRPY(rvec.at<double>(0), -rvec.at<double>(2), rvec.at<double>(1)); // GBR
+//    transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "marker", "camera"));
 }
 void publishMarkerTF()
@@ -220,7 +235,7 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){1,0,0};
 //        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0,1,0};
 //        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){1,1,0};
-//        // skew markers
+        // skew markers
         worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
         worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.35,0.2,0};
         worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.4,0};
@@ -232,9 +247,9 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //            worldCoord.at<cv::Point3f>(perm[3]) = (cv::Point3f){2,3,0};
 
 //        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){2,0,0};
-//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,2,0};
-//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){2,3,0};
+//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
+//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.2,0};
+//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
 
         // Will store  markers found by camera (2D) ordered from bottom to top
         cv::Mat imageCoord(numMarkers,1,cv::DataType<cv::Point2f>::type);
@@ -277,7 +292,7 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //        cv::Mat rvec(3,1,cv::DataType<double>::type);
 //        cv::Mat tvec(3,1,cv::DataType<double>::type);
 
-        // if there are 3 valid markers try to estimate position
+        // if there are 4 valid markers try to estimate position
         if (H.size() >= numMarkers)
         {
             bool useExtrinsicGuess = false;
@@ -291,6 +306,16 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //            std::cout << worldCoord << std::endl;
 //            std::cout << "image Coord" << std::endl;
 //            std::cout << imageCoord << std::endl;
+
+//            if (rvec.empty())
+//            {
+//                useExtrinsicGuess = false;
+//            }
+
+            std::cout << "rvec" << std::endl;
+            std::cout << rvec << std::endl;
+            std::cout << "tvec" << std::endl;
+            std::cout << tvec << std::endl;
 
             cv::solvePnP(worldCoord, imageCoord, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 //            cv::solvePnPRansac(worldCoord, imageCoord, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers, flags);
