@@ -27,7 +27,8 @@ cv::Point runKalmanFilter(cv::KalmanFilter KF, cv::Point statePt, std::list<cv::
 std::list<HoldPoint> mergesort(std::list<HoldPoint> H);
 std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::Mat tvec, int w, int h);
-void publishPositionTF(cv::Mat rvec, cv::Mat tvec);
+void publishCameraTF(cv::Mat rvec, cv::Mat tvec);
+void publishMarkerTF();
 
 int main(int argc, char *argv[])
 {
@@ -128,8 +129,24 @@ int main(int argc, char *argv[])
         // estimate pose
         img = poseEstimation(img, H, rvec, tvec, w, h);
 
+//        std::cout << rvec << std::endl;
+
+        // inverse pose estimation to get camera position
+        cv::Mat rMat(3,3,cv::DataType<double>::type);
+        cv::Mat rMatTrans(3,3,cv::DataType<double>::type);
+        cv::Mat rvecCam(3,1,cv::DataType<double>::type);
+        cv::Mat tvecCam(3,1,cv::DataType<double>::type);
+
+        cv::Rodrigues(rvec, rMat);
+        cv::transpose(rMat, rMatTrans);
+        tvecCam = -rMatTrans * tvec;
+        cv::Rodrigues(rMatTrans, rvecCam);
+
         // publish tf
-        publishPositionTF(rvec, tvec);
+        publishMarkerTF();
+        publishCameraTF(rvecCam, tvecCam);
+
+
 
         // Display images
 //        cv::imshow("New Image", newImage);
@@ -145,13 +162,23 @@ int main(int argc, char *argv[])
     }
 }
 
-void publishPositionTF(cv::Mat rvec, cv::Mat tvec)
+void publishCameraTF(cv::Mat rvec, cv::Mat tvec)
 {
     static tf::TransformBroadcaster br;
     tf::Transform transform;
-    transform.setOrigin(tf::Vector3(tvec.at<double>(2), tvec.at<double>(1), tvec.at<double>(0)));
+    transform.setOrigin(tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
     tf::Quaternion q;
-    q.setRPY(rvec.at<double>(0), rvec.at<double>(1), rvec.at<double>(2));
+    q.setRPY(rvec.at<double>(0), -rvec.at<double>(2), rvec.at<double>(1)); // GBR
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "marker", "camera"));
+}
+void publishMarkerTF()
+{
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(0,1,0));
+    tf::Quaternion q;
+    q.setRPY(3.1415/2, 0, 3.1415/2);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker"));
 }
@@ -195,9 +222,9 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){1,1,0};
 //        // skew markers
         worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){3.5,2,0};
-        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,4,0};
-        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){3.5,6,0};
+        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.35,0.2,0};
+        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.4,0};
+        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.35,0.6,0};
         // unique markers
 //            worldCoord.at<cv::Point3f>(perm[0]) = (cv::Point3f){0,0,0};
 //            worldCoord.at<cv::Point3f>(perm[1]) = (cv::Point3f){2,0,0};
@@ -276,9 +303,9 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
             // project axis
             cv::Mat axis(4,1,cv::DataType<cv::Point3f>::type);
             axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-            axis.at<cv::Point3f>(1) = (cv::Point3f){1,0,0};
-            axis.at<cv::Point3f>(2) = (cv::Point3f){0,1,0};
-            axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,1};
+            axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+            axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+            axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
 
             std::vector<cv::Point2f> projectedPoints;
             cv::projectPoints(axis, rvec, tvec, cameraMatrix, distCoeffs, projectedPoints);
