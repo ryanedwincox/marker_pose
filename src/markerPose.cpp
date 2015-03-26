@@ -15,6 +15,7 @@
 // ROS includes
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
+#include <turtlesim/Pose.h>
 
 // declare local methods
 std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
@@ -26,6 +27,7 @@ cv::Point runKalmanFilter(cv::KalmanFilter KF, cv::Point statePt, std::list<cv::
 std::list<HoldPoint> mergesort(std::list<HoldPoint> H);
 std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::Mat tvec, int w, int h);
+void publishPositionTF(cv::Mat rvec, cv::Mat tvec);
 
 int main(int argc, char *argv[])
 {
@@ -43,7 +45,7 @@ int main(int argc, char *argv[])
 //    std::cout << fps << std::endl;de
 
     // define kernel files
-    const char * findSSLClPath = "/home/pierre/Documents/SSL_Tracking/cl/findSSL.cl";
+    const char * findSSLClPath = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;
@@ -61,6 +63,11 @@ int main(int argc, char *argv[])
 
     cv::Mat rvec(3,1,cv::DataType<double>::type);
     cv::Mat tvec(3,1,cv::DataType<double>::type);
+
+    ros::init(argc, argv, "marker_tf_broadcaster");
+
+    ros::NodeHandle nh;
+    //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
     while (cap.isOpened())
     {
@@ -105,7 +112,6 @@ int main(int argc, char *argv[])
         int matchIndex1 = s1.readMatchesIndexOutput();
         int matchIndex2 = s2.readMatchesIndexOutput();
 
-
         // read matches from kernel
         std::list< cv::Point > matches1;
         matches1 = readMatches(s1, matches1, matchIndex1, true);
@@ -122,6 +128,8 @@ int main(int argc, char *argv[])
         // estimate pose
         img = poseEstimation(img, H, rvec, tvec, w, h);
 
+        // publish tf
+        publishPositionTF(rvec, tvec);
 
         // Display images
 //        cv::imshow("New Image", newImage);
@@ -135,6 +143,17 @@ int main(int argc, char *argv[])
         if(cv::waitKey(1) >= 0) break;
 //        break;
     }
+}
+
+void publishPositionTF(cv::Mat rvec, cv::Mat tvec)
+{
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(tvec.at<double>(2), tvec.at<double>(1), tvec.at<double>(0)));
+    tf::Quaternion q;
+    q.setRPY(rvec.at<double>(0), rvec.at<double>(1), rvec.at<double>(2));
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker"));
 }
 
 // POSE ESTIMATION
@@ -269,8 +288,8 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 
             bool valid = false;
 
-            cv::Point2f point = imageCoord.at<cv::Point2f>(0);
-            std::cout << point.x << std::endl;
+//            cv::Point2f point = imageCoord.at<cv::Point2f>(0);
+//            std::cout << point.x << std::endl;
 
             // undefined solution if any projected point is outside the frame or negative in the z axis or the origin is not near a marker
             for (std::vector<cv::Point2f>::iterator it = projectedPoints.begin(); it != projectedPoints.end(); it++)
@@ -282,12 +301,12 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //                            || abs(projectedPoints[0].y - imageCoord.at<cv::Point2f>(0).y) < 10)
                 {
                     valid = false;
-                    std::cout << "invalid" << std::endl;
+//                    std::cout << "invalid" << std::endl;
                 }
                 else
                 {
                     valid = true;
-                    std::cout << "valid" << std::endl;
+//                    std::cout << "valid" << std::endl;
                 }
             }
 

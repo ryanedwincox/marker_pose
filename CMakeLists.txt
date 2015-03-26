@@ -41,6 +41,7 @@ set(SOURCE_FILES
     src/search.cpp
     src/search.h
     src/markerPose.cpp
+    cl/findSSL.cl
     manifest.xml
 )
 
