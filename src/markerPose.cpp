@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <list>
 
 #include "search.h"
 #include "holdpoint.h"
@@ -65,13 +66,22 @@ int main(int argc, char *argv[])
     cv::Mat rvec(3,1,cv::DataType<double>::type);
     cv::Mat tvec(3,1,cv::DataType<double>::type);
 
-    rvec.at<double>(0) = 3.148783393059644;
-    rvec.at<double>(1) = -0.06469964154880868;
-    rvec.at<double>(2) = 0.3592252022868849;
+    // for rvec and tvec averaging
+    std::list<cv::Mat> rvecQueue;
+    std::list<cv::Mat> tvecQueue;
 
-    tvec.at<double>(0) = -0.07643506669466804;
-    tvec.at<double>(1) = 0.1789476935464252;
-    tvec.at<double>(2) = 1.403211831154492;
+    // Running average of rvec and tvec
+    cv::Mat rvecSum(3,1,cv::DataType<double>::type);
+    cv::Mat tvecSum(3,1,cv::DataType<double>::type);
+
+//    // not needed if not using extrinsic guess
+//    rvec.at<double>(0) = 3.148783393059644;
+//    rvec.at<double>(1) = -0.06469964154880868;
+//    rvec.at<double>(2) = 0.3592252022868849;
+
+//    tvec.at<double>(0) = -0.07643506669466804;
+//    tvec.at<double>(1) = 0.1789476935464252;
+//    tvec.at<double>(2) = 1.403211831154492;
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 
@@ -137,18 +147,83 @@ int main(int argc, char *argv[])
         // estimate pose
         img = poseEstimation(img, H, rvec, tvec, w, h);
 
+//        // Add vectors to sum
+//        rvecSum.at<double>(0) = rvecSum.at<double>(0) + rvec.at<double>(0);
+//        rvecSum.at<double>(1) = rvecSum.at<double>(1) + rvec.at<double>(1);
+//        rvecSum.at<double>(2) = rvecSum.at<double>(2) + rvec.at<double>(2);
+
+//        tvecSum.at<double>(0) = tvecSum.at<double>(0) + tvec.at<double>(0);
+//        tvecSum.at<double>(1) = tvecSum.at<double>(1) + tvec.at<double>(1);
+//        tvecSum.at<double>(2) = tvecSum.at<double>(2) + tvec.at<double>(2);
+
+//        // Add vectors to queue
+//        rvecQueue.push_back(rvec);
+//        tvecQueue.push_back(tvec);
+
+//        std::cout << "rvec" << std::endl;
 //        std::cout << rvec << std::endl;
+
+//        if (rvecQueue.size() >= 10)
+//        {
+//            while (!rvecQueue.empty())
+//                {
+//            cv::Mat rvecOld(3,1,cv::DataType<double>::type);
+//            cv::Mat tvecOld(3,1,cv::DataType<double>::type);
+
+//            rvecOld = rvecQueue.front();
+////            rvecQueue.pop();
+//            tvecOld = tvecQueue.front();
+//            tvecQueue.pop_front();
+
+////            std::cout << "rvec" << std::endl;
+////            std::cout << rvec << std::endl;
+////            std::cout << "tvec" << std::endl;
+////            std::cout << tvec << std::endl;
+
+//            std::cout << "rvecOld" << std::endl;
+//            std::cout << rvecQueue.front() << std::endl;
+////            std::cout << "tvecOld" << std::endl;
+////            std::cout << tvecOld << std::endl;
+//            rvecQueue.pop_front();
+//            }
+
+//            std::cout << rvecQueue.size() << std::endl;
+
+//            rvecSum.at<double>(0) = rvecSum.at<double>(0) - rvecOld.at<double>(0);
+//            rvecSum.at<double>(1) = rvecSum.at<double>(1) - rvecOld.at<double>(1);
+//            rvecSum.at<double>(2) = rvecSum.at<double>(2) - rvecOld.at<double>(2);
+
+//            tvecSum.at<double>(0) = tvecSum.at<double>(0) - tvecOld.at<double>(0);
+//            tvecSum.at<double>(1) = tvecSum.at<double>(1) - tvecOld.at<double>(1);
+//            tvecSum.at<double>(2) = tvecSum.at<double>(2) - tvecOld.at<double>(2);
+
+//            rvec.at<double>(0) = rvecSum.at<double>(0) / 10;
+//            rvec.at<double>(1) = rvecSum.at<double>(1) / 10;
+//            rvec.at<double>(2) = rvecSum.at<double>(2) / 10;
+
+//            tvec.at<double>(0) = tvecSum.at<double>(0) / 10;
+//            tvec.at<double>(1) = tvecSum.at<double>(1) / 10;
+//            tvec.at<double>(2) = tvecSum.at<double>(2) / 10;
+
+//            std::cout << "rvecSum" << std::endl;
+//            std::cout << rvecSum << std::endl;
+//            std::cout << "tvecSum" << std::endl;
+//            std::cout << tvecSum << std::endl;
+//        }
+
+//        std::cout << "rvec" << std::endl;
+//        std::cout << rvec << std::endl;
+//        std::cout << "tvec" << std::endl;
+//        std::cout << tvec << std::endl;
 
         // inverse pose estimation to get camera position
         cv::Mat rMat(3,3,cv::DataType<double>::type);
         cv::Mat rMatTrans(3,3,cv::DataType<double>::type);
-        cv::Mat rvecCam(3,1,cv::DataType<double>::type);
         cv::Mat tvecCam(3,1,cv::DataType<double>::type);
 
         cv::Rodrigues(rvec, rMat);
         cv::transpose(rMat, rMatTrans);
         tvecCam = -rMatTrans * tvec;
-        cv::Rodrigues(rMatTrans, rvecCam);
 
         // publish tf
         publishMarkerTF();
@@ -176,8 +251,8 @@ void publishCameraTF(cv::Mat rMat, cv::Mat tvec)
     tfScalar m10 = rMat.at<double>(1,0); tfScalar m11 = rMat.at<double>(1,1); tfScalar m12 = rMat.at<double>(1,2);
     tfScalar m20 = rMat.at<double>(2,0); tfScalar m21 = rMat.at<double>(2,1); tfScalar m22 = rMat.at<double>(2,2);
     tf::Matrix3x3 rotMat(m00,m01,m02,
-                    m10,m11,m12,
-                    m20,m21,m22);
+                        m10,m11,m12,
+                        m20,m21,m22);
 
     static tf::TransformBroadcaster br;
     tf::Transform transform(rotMat, tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
@@ -230,26 +305,26 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //        do
 //        {
 
-        // quad markers
-//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0,0,0};
-//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){1,0,0};
-//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0,1,0};
-//        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){1,1,0};
+//        // quad markers
+//        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.1,0.1,0};
         // skew markers
-        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.35,0.2,0};
-        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.4,0};
-        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.35,0.6,0};
+//        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.35,0.2,0};
+//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.4,0};
+//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.35,0.6,0};
         // unique markers
 //            worldCoord.at<cv::Point3f>(perm[0]) = (cv::Point3f){0,0,0};
 //            worldCoord.at<cv::Point3f>(perm[1]) = (cv::Point3f){2,0,0};
 //            worldCoord.at<cv::Point3f>(perm[2]) = (cv::Point3f){0,2,0};
 //            worldCoord.at<cv::Point3f>(perm[3]) = (cv::Point3f){2,3,0};
 
-//        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
-//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.2,0};
-//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
+        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
+        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.2,0};
+        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
 
         // Will store  markers found by camera (2D) ordered from bottom to top
         cv::Mat imageCoord(numMarkers,1,cv::DataType<cv::Point2f>::type);
@@ -271,12 +346,12 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
         std::list<HoldPoint> sorted = mergesort(HList);
 
         // print ordered matches
-//        std::cout << "Ordered Matches" << std::endl;
+        std::cout << "Ordered Matches" << std::endl;
         int j = numMarkers;
         for (std::list<HoldPoint>::iterator it = sorted.begin(); it != sorted.end(); it++)
         {
             j--;
-//            std::cout << it->heldMatch << std::endl;
+            std::cout << it->heldMatch << std::endl;
             if (j >= 0)
             {
                 imageCoord.at<cv::Point2f>(j) = it->heldMatch;
@@ -296,10 +371,10 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
         if (H.size() >= numMarkers)
         {
             bool useExtrinsicGuess = false;
-            int iterationsCount = 100;
-            float reprojectionError = 2.0;
-            int minInliersCount = 2;
-            cv::Mat inliers(0,4,cv::DataType<int>::type);
+            int iterationsCount = 50;
+            float reprojectionError = 8.0;
+            int minInliersCount = 4;
+            cv::Mat inliers(0,0,cv::DataType<int>::type);
             int flags = cv::ITERATIVE;
 
 //            std::cout << "world Coord" << std::endl;
@@ -312,13 +387,64 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 //                useExtrinsicGuess = false;
 //            }
 
-            std::cout << "rvec" << std::endl;
-            std::cout << rvec << std::endl;
-            std::cout << "tvec" << std::endl;
-            std::cout << tvec << std::endl;
+
 
             cv::solvePnP(worldCoord, imageCoord, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 //            cv::solvePnPRansac(worldCoord, imageCoord, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, iterationsCount, reprojectionError, minInliersCount, inliers, flags);
+
+//            std::cout << "rvec" << std::endl;
+//            std::cout << rvec << std::endl;
+//            std::cout << "tvec" << std::endl;
+//            std::cout << tvec << std::endl;
+
+
+
+//            // Add vectors to sum
+//            rvecSum.at<double>(0) = rvecSum.at<double>(0) + rvec.at<double>(0);
+//            rvecSum.at<double>(1) = rvecSum.at<double>(1) + rvec.at<double>(1);
+//            rvecSum.at<double>(2) = rvecSum.at<double>(2) + rvec.at<double>(2);
+
+//            tvecSum.at<double>(0) = tvecSum.at<double>(0) + tvec.at<double>(0);
+//            tvecSum.at<double>(1) = tvecSum.at<double>(1) + tvec.at<double>(1);
+//            tvecSum.at<double>(2) = tvecSum.at<double>(2) + tvec.at<double>(2);
+
+//            // Add vectors to queue
+//            rvecQueue.push(rvec);
+//            tvecQueue.push(tvec);
+
+//            std::cout << rvecQueue.size() << std::endl;
+
+//            if (rvecQueue.size() >= 10)
+//            {
+//                cv::Mat rvecOld(3,1,cv::DataType<double>::type);
+//                cv::Mat tvecOld(3,1,cv::DataType<double>::type);
+
+//                rvecOld = rvecQueue.front();
+//                rvecQueue.pop();
+//                tvecOld = tvecQueue.front();
+//                tvecQueue.pop();
+
+//                rvecSum.at<double>(0) = rvecSum.at<double>(0) - rvecOld.at<double>(0);
+//                rvecSum.at<double>(1) = rvecSum.at<double>(1) - rvecOld.at<double>(1);
+//                rvecSum.at<double>(2) = rvecSum.at<double>(2) - rvecOld.at<double>(2);
+
+//                tvecSum.at<double>(0) = tvecSum.at<double>(0) - tvecOld.at<double>(0);
+//                tvecSum.at<double>(1) = tvecSum.at<double>(1) - tvecOld.at<double>(1);
+//                tvecSum.at<double>(2) = tvecSum.at<double>(2) - tvecOld.at<double>(2);
+
+//                rvec.at<double>(0) = rvecSum.at<double>(0) / 10;
+//                rvec.at<double>(1) = rvecSum.at<double>(1) / 10;
+//                rvec.at<double>(2) = rvecSum.at<double>(2) / 10;
+
+//                tvec.at<double>(0) = tvecSum.at<double>(0) / 10;
+//                tvec.at<double>(1) = tvecSum.at<double>(1) / 10;
+//                tvec.at<double>(2) = tvecSum.at<double>(2) / 10;
+
+//                std::cout << "rvecSum" << std::endl;
+//                std::cout << rvecSum << std::endl;
+//                std::cout << "tvecSum" << std::endl;
+//                std::cout << tvecSum << std::endl;
+//            }
 
 //            std::cout << "rvec" << std::endl;
 //            std::cout << rvec << std::endl;
@@ -553,6 +679,7 @@ std::vector<HoldPoint> holdPoints(std::vector<HoldPoint> H, std::list<cv::Point>
         avgMatches.pop_front();
     }
 
+    // loop through all current matches again to delete matches that have timed out
     for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
     {
         if (it->heldMatch == (cv::Point)NULL)
@@ -571,6 +698,23 @@ std::vector<HoldPoint> holdPoints(std::vector<HoldPoint> H, std::list<cv::Point>
             it->checked = false;
         }
     }
+
+    // check for duplicates and delete them
+    for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
+    {
+        for (std::vector<HoldPoint>::iterator jt = it + 1; jt != H.end(); jt++)
+        {
+            int radius = 10;
+            // delete one hold point if two are near to each other
+            if (abs(it->prevPoint.x - jt->prevPoint.x) < radius && abs(it->prevPoint.y - jt->prevPoint.y) < radius)
+            {
+                H.erase(jt);
+                goto getout; // because iteration length has changed
+            }
+        }
+    }
+    getout:
+
     return H;
 }
 
