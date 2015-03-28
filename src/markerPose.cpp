@@ -144,6 +144,14 @@ int main(int argc, char *argv[])
         // Draw targets over averaged matches
         img = drawTargets(img, H, cv::Scalar(0,0,255));
 
+        rvec.at<double>(0) = 0;
+        rvec.at<double>(1) = 0;
+        rvec.at<double>(2) = 0;
+
+        tvec.at<double>(0) = 0;
+        tvec.at<double>(1) = 0;
+        tvec.at<double>(2) = 0;
+
         // estimate pose
         img = poseEstimation(img, H, rvec, tvec, w, h);
 
@@ -211,10 +219,10 @@ int main(int argc, char *argv[])
 //            std::cout << tvecSum << std::endl;
 //        }
 
-//        std::cout << "rvec" << std::endl;
-//        std::cout << rvec << std::endl;
-//        std::cout << "tvec" << std::endl;
-//        std::cout << tvec << std::endl;
+        std::cout << "rvec" << std::endl;
+        std::cout << rvec << std::endl;
+        std::cout << "tvec" << std::endl;
+        std::cout << tvec << std::endl;
 
         // inverse pose estimation to get camera position
         cv::Mat rMat(3,3,cv::DataType<double>::type);
@@ -225,15 +233,14 @@ int main(int argc, char *argv[])
         cv::transpose(rMat, rMatTrans);
         tvecCam = -rMatTrans * tvec;
 
-        // publish tf
-        publishMarkerTF();
-        publishCameraTF(rMatTrans, tvecCam);
-
-
+        if (H.size() >= 4)
+        {
+            // publish tf
+            publishMarkerTF();
+            publishCameraTF(rMatTrans, tvecCam);
+        }
 
         // Display images
-//        cv::imshow("New Image", newImage);
-
 //        cv::imshow("Binary Image", imgBin);
 
         cv::imshow("Original Image", img);
@@ -346,12 +353,12 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
         std::list<HoldPoint> sorted = mergesort(HList);
 
         // print ordered matches
-        std::cout << "Ordered Matches" << std::endl;
+//        std::cout << "Ordered Matches" << std::endl;
         int j = numMarkers;
         for (std::list<HoldPoint>::iterator it = sorted.begin(); it != sorted.end(); it++)
         {
             j--;
-            std::cout << it->heldMatch << std::endl;
+//            std::cout << it->heldMatch << std::endl;
             if (j >= 0)
             {
                 imageCoord.at<cv::Point2f>(j) = it->heldMatch;
@@ -495,8 +502,27 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
                 cv::line(img, projectedPoints[0], projectedPoints[2], cv::Scalar(0,255,0), 2);
                 cv::line(img, projectedPoints[0], projectedPoints[3], cv::Scalar(255,0,0), 2);
             }
+
+//            // project markers to check accuracy of pnp
+//            cv::Mat m(4,1,cv::DataType<cv::Point3f>::type);
+//            m.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+//            m.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
+//            m.at<cv::Point3f>(2) = (cv::Point3f){0,0.2,0};
+//            m.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
+
+//            std::vector<cv::Point2f> projectedm;
+//            cv::projectPoints(m, rvec, tvec, cameraMatrix, distCoeffs, projectedm);
+
+//            // undefined solution if any projected point is outside the frame or negative in the z axis or the origin is not near a marker
+//            for (std::vector<cv::Point2f>::iterator it = projectedm.begin(); it != projectedm.end(); it++)
+//            {
+//                cv::circle(img, *it, 5, cv::Scalar(255,255,0), 2);
+//            }
+
         }
 //        } while ( std::next_permutation(perm,perm+numMarkers) );
+
+
 
     return img;
 }
@@ -609,7 +635,7 @@ std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
 
         int i = 0;
         int count = 0;
-        int radius = 30;
+        int radius = 40;
 
         // Compare all remaining matches and if they are close to the current match then they are in the same cluster
         while (i < matches.size())
