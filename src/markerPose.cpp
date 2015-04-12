@@ -11,6 +11,8 @@
 
 #include "search.h"
 #include "holdpoint.h"
+#include "markerlayout.h"
+#include "barcode.h"
 #include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
 
 // ROS includes
@@ -27,24 +29,24 @@ cv::KalmanFilter createKalmanFilter(int x, int y);
 cv::Point runKalmanFilter(cv::KalmanFilter KF, cv::Point statePt, std::list<cv::Point> avgMatches);
 std::list<HoldPoint> mergesort(std::list<HoldPoint> H);
 std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
-cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs);
+cv::Mat poseEstimation(cv::Mat img, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat worldCoord, cv::Mat imageCoord);
 void averageVec (cv::Mat rvec, cv::Mat tvec/*, double rvecSum0, double rvecSum1, double rvecSum2, std::queue<double> rvecQueue0,
                       std::queue<double> rvecQueue1, std::queue<double> rvecQueue2*/);
 void publishCameraTF(cv::Mat rMat, cv::Mat tvec);
 void publishMarkerTF();
-int getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h);
 
 int main(int argc, char *argv[])
 {
     //Create video capture object
     int cameraNum = 0;
-    const char* filename = "/home/pierre/Documents/SSL_Tracking/images/OrcusPortageBayMarker.mp4";
+    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/SSLBarcodePortageBay_20150411_13 59 32.avi";
     cv::VideoCapture cap(cameraNum);
     if(!cap.isOpened())  // check if we succeeded
     {
         std::cout << "camera not found" << std::endl;
         return -1;
     }
+    cap.set(CV_CAP_PROP_FPS,30);
 
 //    double fps=cap.get(CV_CAP_PROP_FPS);
 //    std::cout << fps << std::endl;de
@@ -86,21 +88,42 @@ int main(int argc, char *argv[])
     distCoeffs.at<double>(1) = 0.03747;
     distCoeffs.at<double>(2) = 0.0026472;
     distCoeffs.at<double>(3) = 0.00422;
-    distCoeffs.at<double>(4) = -0.4924;
+    distCoeffs.at<double>(4) = -0.4924;  
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 
     ros::NodeHandle nh;
     //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
+    int newFrame = 0;
+    cv::Mat img;
+    cap >> img;
+
+    int w = img.cols;
+    int h = img.rows;
+
+    MarkerLayout marker;
+
+    Barcode barcode;
+    barcode.setCameraParmeters(cameraMatrix, distCoeffs, w, h);
+
     while (cap.isOpened())
     {
-        // Get new frame
-        cv::Mat img;
+//        // repeat each frame once for recorded video
+//        if (newFrame > 3)
+//        {
+//            // Get new frame
+//            cap >> img;
+
+//            newFrame = 0;
+//        }
+//        else
+//        {
+//            newFrame++;
+//        }
         cap >> img;
 
-        int w = img.cols;
-        int h = img.rows;
+
         if (VERBOSE)
         {
             std::cout << "image width: " << w << " image height: " << h << std::endl;
@@ -149,6 +172,11 @@ int main(int argc, char *argv[])
         // Draw targets over averaged matches
         img = drawTargets(img, H, cv::Scalar(0,0,255));
 
+        std::vector<HoldPoint> Hsorted = marker.sortPointsVertically(H);
+
+        marker.setImageCoord(Hsorted);
+
+
         // reset rvec and tvec
         rvec.at<double>(0) = 0;
         rvec.at<double>(1) = 0;
@@ -158,58 +186,66 @@ int main(int argc, char *argv[])
         tvec.at<double>(1) = 0;
         tvec.at<double>(2) = 0;
 
-        // estimate pose
-        img = poseEstimation(img, H, rvec, tvec, w, h, cameraMatrix, distCoeffs);
+        if (marker.enoughMarkers)
+        {
+            // estimate pose
+            // TODO get pose estimation for each orientation
+            img = poseEstimation(img, rvec, tvec, w, h, cameraMatrix, distCoeffs, marker.getWorldCoord(), marker.getImageCoord(0));
+        }
 
-        // if rvec and tvec != 0
         averageVec (rvec, tvec);
 
+        // if rvec and tvec != 0
         if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
             tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
         {
             // project axis
-            cv::Mat axis(4,1,cv::DataType<cv::Point3f>::type);
-            axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-            axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
-            axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
-            axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
+            img = barcode.projectAxis(img, rvec, tvec);
+//            cv::Mat axis(4,1,cv::DataType<cv::Point3f>::type);
+//            axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+//            axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+//            axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+//            axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
 
-            std::vector<cv::Point2f> projectedAxis;
-            cv::projectPoints(axis, rvec, tvec, cameraMatrix, distCoeffs, projectedAxis);
+//            std::vector<cv::Point2f> projectedAxis;
+//            cv::projectPoints(axis, rvec, tvec, cameraMatrix, distCoeffs, projectedAxis);
 
-            cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
-            cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
-            cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
+//            cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
+//            cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
+//            cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
 
             // Project barcode layout
-            cv::Mat barcodeGrid(4,1,cv::DataType<cv::Point3f>::type);
-            barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){0.04,0.09,0};
-            barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){0.16,0.09,0};
-            barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){0.04,0.21,0};
-            barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){0.16,0.21,0};
+            img = barcode.projectBarcodeGrid(img, rvec, tvec);
+//            cv::Mat barcodeGrid(4,1,cv::DataType<cv::Point3f>::type);
+//            barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){0.04,0.09,0};
+//            barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){0.16,0.09,0};
+//            barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){0.04,0.21,0};
+//            barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){0.16,0.21,0};
 
-            std::vector<cv::Point2f> projectedGrid;
-            cv::projectPoints(barcodeGrid, rvec, tvec, cameraMatrix, distCoeffs, projectedGrid);
+//            std::vector<cv::Point2f> projectedGrid;
+//            cv::projectPoints(barcodeGrid, rvec, tvec, cameraMatrix, distCoeffs, projectedGrid);
 
-            cv::line(img, projectedGrid[0], projectedGrid[1], cv::Scalar(0,0,255), 2);
-            cv::line(img, projectedGrid[1], projectedGrid[3], cv::Scalar(0,255,0), 2);
-            cv::line(img, projectedGrid[2], projectedGrid[0], cv::Scalar(255,0,0), 2);
-            cv::line(img, projectedGrid[3], projectedGrid[2], cv::Scalar(255,255,0), 2);
+//            cv::line(img, projectedGrid[0], projectedGrid[1], cv::Scalar(0,0,255), 2);
+//            cv::line(img, projectedGrid[1], projectedGrid[3], cv::Scalar(0,255,0), 2);
+//            cv::line(img, projectedGrid[2], projectedGrid[0], cv::Scalar(255,0,0), 2);
+//            cv::line(img, projectedGrid[3], projectedGrid[2], cv::Scalar(255,255,0), 2);
 
     //            // Project sample points
-            cv::Mat samplePoints(9,1,cv::DataType<cv::Point3f>::type);
-            samplePoints.at<cv::Point3f>(0) = (cv::Point3f){0.06,0.11,0};
-            samplePoints.at<cv::Point3f>(1) = (cv::Point3f){0.10,0.11,0};
-            samplePoints.at<cv::Point3f>(2) = (cv::Point3f){0.14,0.11,0};
-            samplePoints.at<cv::Point3f>(3) = (cv::Point3f){0.06,0.15,0};
-            samplePoints.at<cv::Point3f>(4) = (cv::Point3f){0.10,0.15,0};
-            samplePoints.at<cv::Point3f>(5) = (cv::Point3f){0.14,0.15,0};
-            samplePoints.at<cv::Point3f>(6) = (cv::Point3f){0.06,0.19,0};
-            samplePoints.at<cv::Point3f>(7) = (cv::Point3f){0.10,0.19,0};
-            samplePoints.at<cv::Point3f>(8) = (cv::Point3f){0.14,0.19,0};
+//            cv::Mat samplePoints(9,1,cv::DataType<cv::Point3f>::type);
+//            samplePoints.at<cv::Point3f>(0) = (cv::Point3f){0.06,0.11,0};
+//            samplePoints.at<cv::Point3f>(1) = (cv::Point3f){0.10,0.11,0};
+//            samplePoints.at<cv::Point3f>(2) = (cv::Point3f){0.14,0.11,0};
+//            samplePoints.at<cv::Point3f>(3) = (cv::Point3f){0.06,0.15,0};
+//            samplePoints.at<cv::Point3f>(4) = (cv::Point3f){0.10,0.15,0};
+//            samplePoints.at<cv::Point3f>(5) = (cv::Point3f){0.14,0.15,0};
+//            samplePoints.at<cv::Point3f>(6) = (cv::Point3f){0.06,0.19,0};
+//            samplePoints.at<cv::Point3f>(7) = (cv::Point3f){0.10,0.19,0};
+//            samplePoints.at<cv::Point3f>(8) = (cv::Point3f){0.14,0.19,0};
 
-            std::vector<cv::Point2f> projectedSamplePoints;
-            cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
+//            std::vector<cv::Point2f> projectedSamplePoints;
+//            cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
+
+            barcode.projectSamplePoints(rvec, tvec);
 
     //        cv::circle(img, projectedSamplePoints[0], 2, cv::Scalar(0,0,255), -1);
     //        cv::circle(img, projectedSamplePoints[1], 2, cv::Scalar(0,0,255), -1);
@@ -222,35 +258,38 @@ int main(int argc, char *argv[])
     //        cv::circle(img, projectedSamplePoints[8], 2, cv::Scalar(0,0,255), -1);
 
             // Get barcode value
-            int barcode [9];
-            for (int i = 0; i < 8; i++)
-            {
-                barcode[i] = getSectionValue(imgBin, projectedSamplePoints[i], w, h);
-    //            std::cout << barcode[i] << std::endl;
-            }
+            int foundMarker = barcode.getMarkerNumber(imgBin);
 
-            // Compare barcodes
-            int barcode1 [9] = {0,  0,  0,
-                                255,0,  0,
-                                0,  0,  0};
+            std::cout << foundMarker << std::endl;
+//            int barcode [9];
+//            for (int i = 0; i < 8; i++)
+//            {
+//                barcode[i] = getSectionValue(imgBin, projectedSamplePoints[i], w, h);
+//    //            std::cout << barcode[i] << std::endl;
+//            }
 
-            bool code1 = true;
-            for (int i = 0; i < 8; i++)
-            {
-                if (barcode[i] != barcode1[i])
-                {
-                    code1 = false;
-                }
-            }
+//            // Compare barcodes
+//            int barcode1 [9] = {0,  0,  0,
+//                                255,0,  0,
+//                                0,  0,  0};
 
-            if (code1)
-            {
-                std::cout << "barcode #1" << std::endl;
-            }
-            else
-            {
-                std::cout << "no barcode found" << std::endl;
-            }
+//            bool code1 = true;
+//            for (int i = 0; i < 8; i++)
+//            {
+//                if (barcode[i] != barcode1[i])
+//                {
+//                    code1 = false;
+//                }
+//            }
+
+//            if (code1)
+//            {
+//                std::cout << "barcode #1" << std::endl;
+//            }
+//            else
+//            {
+//                std::cout << "no barcode found" << std::endl;
+//            }
 
 
 
@@ -385,67 +424,64 @@ void averageVec (cv::Mat rvec, cv::Mat tvec/*, double rvecSum0, double rvecSum1,
 }
 
 // POSE ESTIMATION
-cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs)
+cv::Mat poseEstimation(cv::Mat img, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat worldCoord, cv::Mat imageCoord)
 {
-
-
-
     // Define marker points in world coordinates (3D)
     int numMarkers = 4;
-    cv::Mat worldCoord(numMarkers,1,cv::DataType<cv::Point3f>::type);
+//    cv::Mat worldCoord(numMarkers,1,cv::DataType<cv::Point3f>::type);
 
-//        int perm[] = {0,1,2,3};
+////        int perm[] = {0,1,2,3};
 
-//        do
+////        do
+////        {
+
+//        // quad markers
+//        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+//        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
+//        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.3,0};
+//        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
+
+
+//        // Will store  markers found by camera (2D) ordered from bottom to top
+//        cv::Mat imageCoord(numMarkers,1,cv::DataType<cv::Point2f>::type);
+
+//        // copy H vector into a list for ordering
+//        std::list<HoldPoint> HList;
+//        int jj = 0;
+//        for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
 //        {
+//            if (jj < numMarkers)
+//            {
+//                HList.push_back(*it);
+//                imageCoord.at<cv::Point2f>(jj) = it->heldMatch;
+//                jj++;
+//            }
+//        }
 
-        // quad markers
-        worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-        worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
-        worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.3,0};
-        worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
+//        // sort holdpoints
+//        std::list<HoldPoint> sorted = mergesort(HList);
 
-
-        // Will store  markers found by camera (2D) ordered from bottom to top
-        cv::Mat imageCoord(numMarkers,1,cv::DataType<cv::Point2f>::type);
-
-        // copy H vector into a list for ordering
-        std::list<HoldPoint> HList;
-        int jj = 0;
-        for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
-        {
-            if (jj < numMarkers)
-            {
-                HList.push_back(*it);
-                imageCoord.at<cv::Point2f>(jj) = it->heldMatch;
-                jj++;
-            }
-        }
-
-        // sort holdpoints
-        std::list<HoldPoint> sorted = mergesort(HList);
-
-        // print ordered matches
-//        std::cout << "Ordered Matches" << std::endl;
-        int j = numMarkers;
-        for (std::list<HoldPoint>::iterator it = sorted.begin(); it != sorted.end(); it++)
-        {
-            j--;
-//            std::cout << it->heldMatch << std::endl;
-            if (j >= 0)
-            {
-                imageCoord.at<cv::Point2f>(j) = it->heldMatch;
-                if (j == 0) cv::circle(img, it->heldMatch, 3, cv::Scalar(0,255,0), -1);
-                if (j == 1) cv::circle(img, it->heldMatch, 3, cv::Scalar(255,255,0), -1);
-                if (j == 2) cv::circle(img, it->heldMatch, 3, cv::Scalar(0,0,0), -1);
-                if (j == 3) cv::circle(img, it->heldMatch, 3, cv::Scalar(255,0,0), -1);
-//                j++;
-            }
-        }
+//        // print ordered matches
+////        std::cout << "Ordered Matches" << std::endl;
+//        int j = numMarkers;
+//        for (std::list<HoldPoint>::iterator it = sorted.begin(); it != sorted.end(); it++)
+//        {
+//            j--;
+////            std::cout << it->heldMatch << std::endl;
+//            if (j >= 0)
+//            {
+//                imageCoord.at<cv::Point2f>(j) = it->heldMatch;
+//                if (j == 0) cv::circle(img, it->heldMatch, 3, cv::Scalar(0,255,0), -1);
+//                if (j == 1) cv::circle(img, it->heldMatch, 3, cv::Scalar(255,255,0), -1);
+//                if (j == 2) cv::circle(img, it->heldMatch, 3, cv::Scalar(0,0,0), -1);
+//                if (j == 3) cv::circle(img, it->heldMatch, 3, cv::Scalar(255,0,0), -1);
+////                j++;
+//            }
+//        }
 
         // if there are 4 valid markers try to estimate position
-        if (H.size() >= numMarkers)
-        {
+//        if (H.size() >= numMarkers)
+//        {
             int flags = cv::ITERATIVE;
             bool useExtrinsicGuess = false;
 
@@ -453,7 +489,7 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
 
 
 
-        }
+//        }
 //        } while ( std::next_permutation(perm,perm+numMarkers) );
 
 
@@ -461,82 +497,7 @@ cv::Mat poseEstimation(cv::Mat img, std::vector<HoldPoint> H, cv::Mat rvec, cv::
     return img;
 }
 
-// TODO sample and average several points
-int getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h)
-{
-    if (samplePoint.x >= 0 && samplePoint.y >= 0 && samplePoint.x <= w && samplePoint.y <= h)
-    {
-        return (int)img.at<uchar>(samplePoint.y,samplePoint.x);
-    }
-    else
-    {
-        return -1;
-    }
-}
 
-std::list<HoldPoint> mergesort(std::list<HoldPoint> H)
-{
-    std::list<HoldPoint> left;
-    std::list<HoldPoint> right;
-    std::list<HoldPoint> result;
-    if (H.size() <= 1)
-    {
-        return H;
-    }
-    else
-    {
-        int middle = H.size() / 2;
-        int i = 0;
-        for (std::list<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
-        {
-            if (i < middle)
-            {
-                left.push_back(*it);
-            }
-            else
-            {
-                right.push_back(*it);
-            }
-            i++;
-        }
-    }
-
-    left = mergesort(left);
-    right = mergesort(right);
-    result = merge(left, right);
-
-    return result;
-}
-
-std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right)
-{
-    std::list<HoldPoint> result;
-
-    while (left.size() > 0 && right.size() > 0)
-    {
-        if (left.front().heldMatch.y <= right.front().heldMatch.y)
-        {
-            result.push_back(left.front());
-            left.pop_front();
-        }
-        else
-        {
-            result.push_back(right.front());
-            right.pop_front();
-        }
-    }
-    while (left.size() > 0)
-    {
-        result.push_back(left.front());
-        left.pop_front();
-    }
-    while (right.size() > 0)
-    {
-        result.push_back(right.front());
-        right.pop_front();
-    }
-    return result;
-}
 
 std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz)
 {

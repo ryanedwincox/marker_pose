@@ -36,6 +36,10 @@ include_directories("/opt/AMDAPP/include")
 include_directories("/usr/include/")
 
 set(SOURCE_FILES
+    src/markerlayout.cpp
+    src/markerlayout.h
+    src/barcode.cpp
+    src/barcode.h
     src/holdpoint.cpp
     src/holdpoint.h
     src/search.cpp
