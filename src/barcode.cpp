@@ -17,9 +17,17 @@ Barcode::Barcode()
     barcodes[0][3] = 1; barcodes[0][4] = 0; barcodes[0][5] = 0;
     barcodes[0][6] = 0; barcodes[0][7] = 0; barcodes[0][8] = 0;
 
-    barcodes[1][0] = 0; barcodes[1][1] = 1; barcodes[1][2] = 0;
-    barcodes[1][3] = 1; barcodes[1][4] = 0; barcodes[1][5] = 0;
-    barcodes[1][6] = 0; barcodes[1][7] = 0; barcodes[1][8] = 0;
+//    barcodes[1][0] = 0; barcodes[1][1] = 1; barcodes[1][2] = 0;
+//    barcodes[1][3] = 0; barcodes[1][4] = 0; barcodes[1][5] = 0;
+//    barcodes[1][6] = 0; barcodes[1][7] = 0; barcodes[1][8] = 0;
+
+//    barcodes[2][0] = 0; barcodes[2][1] = 0; barcodes[2][2] = 0;
+//    barcodes[2][3] = 0; barcodes[2][4] = 0; barcodes[2][5] = 1;
+//    barcodes[2][6] = 0; barcodes[2][7] = 0; barcodes[2][8] = 0;
+
+//    barcodes[3][0] = 0; barcodes[3][1] = 0; barcodes[3][2] = 0;
+//    barcodes[3][3] = 0; barcodes[3][4] = 0; barcodes[3][5] = 0;
+//    barcodes[3][6] = 0; barcodes[3][7] = 1; barcodes[3][8] = 0;
 }
 
 void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h)
@@ -87,14 +95,12 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
     for (int i = 0; i < 8; i++)
     {
         barcodeInput[i] = getSectionValue(imgBin, projectedSamplePoints[i], w, h);
-//            std::cout << barcode[i] << std::endl;
+//        std::cout << barcodeInput[i] << std::endl;
     }
-
-    // Compare barcodes
-
 
     for (int j = 0; j < NUM_BARCODES; j++)
     {
+    int j = 0;
         bool match = true;
         for (int i = 0; i < 8; i++)
         {
@@ -113,11 +119,11 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
 }
 
 // TODO sample and average several points
-int Barcode::getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h)
+int Barcode::getSectionValue(cv::Mat imgBin, cv::Point2f samplePoint, int w, int h)
 {
     if (samplePoint.x >= 0 && samplePoint.y >= 0 && samplePoint.x <= w && samplePoint.y <= h)
     {
-        return (int)img.at<uchar>(samplePoint.y,samplePoint.x) / 255;
+        return (int)imgBin.at<uchar>(samplePoint.y,samplePoint.x) / 255;
     }
     else
     {

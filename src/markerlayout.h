@@ -7,6 +7,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <queue>
 
 #include "holdpoint.h"
 
@@ -18,8 +19,10 @@ public:
     cv::Mat getWorldCoord();
     cv::Mat getImageCoord(int orientation);
     std::vector<HoldPoint> sortPointsVertically(std::vector<HoldPoint> H);
+    void averageVec (cv::Mat rvec, cv::Mat tvec);
 
     bool enoughMarkers;
+    int numMarkers;
 
 private:
     // sorting methods
@@ -27,9 +30,16 @@ private:
     std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 
     // Variables
-    int numMarkers;
     cv::Mat worldCoord;
     cv::Mat imageCoord;
+    cv::Mat imageCoord0;
+    cv::Mat imageCoord1;
+    cv::Mat imageCoord2;
+    cv::Mat imageCoord3;
+    cv::Mat imageCoord4;
+    cv::Mat imageCoord5;
+    cv::Mat imageCoord6;
+    cv::Mat imageCoord7;
     std::vector<cv::Mat> imageCoordVec;
 
 };

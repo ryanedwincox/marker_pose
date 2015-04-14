@@ -15,7 +15,15 @@ MarkerLayout::MarkerLayout()
 
     // Define 2D corrdinates of markers detected in image
     imageCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoordVec = std::vector<cv::Mat>(numMarkers, imageCoord);
+    imageCoord0 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord1 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord2 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord3 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord4 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord5 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord6 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+    imageCoord7 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
+//    imageCoordVec = std::vector<cv::Mat>(8, imageCoord);
 
     enoughMarkers = false;
 }
@@ -29,10 +37,85 @@ void MarkerLayout::setImageCoord(std::vector<HoldPoint> H)
         enoughMarkers = true;
 
         // fill in all imageCoordVec permutations.  There should be 8 total
-        imageCoordVec.at(0).at<cv::Point2f>(0) = H.at(0).heldMatch;
-        imageCoordVec.at(0).at<cv::Point2f>(1) = H.at(1).heldMatch;
-        imageCoordVec.at(0).at<cv::Point2f>(2) = H.at(2).heldMatch;
-        imageCoordVec.at(0).at<cv::Point2f>(3) = H.at(3).heldMatch;
+        imageCoord0.at<cv::Point2f>(0) = H.at(0).heldMatch;
+        imageCoord0.at<cv::Point2f>(1) = H.at(1).heldMatch;
+        imageCoord0.at<cv::Point2f>(2) = H.at(2).heldMatch;
+        imageCoord0.at<cv::Point2f>(3) = H.at(3).heldMatch;
+
+        imageCoord1.at<cv::Point2f>(0) = H.at(1).heldMatch;
+        imageCoord1.at<cv::Point2f>(1) = H.at(0).heldMatch;
+        imageCoord1.at<cv::Point2f>(2) = H.at(3).heldMatch;
+        imageCoord1.at<cv::Point2f>(3) = H.at(2).heldMatch;
+
+        imageCoord2.at<cv::Point2f>(0) = H.at(0).heldMatch;
+        imageCoord2.at<cv::Point2f>(1) = H.at(2).heldMatch;
+        imageCoord2.at<cv::Point2f>(2) = H.at(1).heldMatch;
+        imageCoord2.at<cv::Point2f>(3) = H.at(3).heldMatch;
+
+        imageCoord3.at<cv::Point2f>(0) = H.at(1).heldMatch;
+        imageCoord3.at<cv::Point2f>(1) = H.at(3).heldMatch;
+        imageCoord3.at<cv::Point2f>(2) = H.at(0).heldMatch;
+        imageCoord3.at<cv::Point2f>(3) = H.at(2).heldMatch;
+
+        imageCoord4.at<cv::Point2f>(0) = H.at(3).heldMatch;
+        imageCoord4.at<cv::Point2f>(1) = H.at(2).heldMatch;
+        imageCoord4.at<cv::Point2f>(2) = H.at(1).heldMatch;
+        imageCoord4.at<cv::Point2f>(3) = H.at(0).heldMatch;
+
+        imageCoord5.at<cv::Point2f>(0) = H.at(2).heldMatch;
+        imageCoord5.at<cv::Point2f>(1) = H.at(3).heldMatch;
+        imageCoord5.at<cv::Point2f>(2) = H.at(0).heldMatch;
+        imageCoord5.at<cv::Point2f>(3) = H.at(1).heldMatch;
+
+        imageCoord6.at<cv::Point2f>(0) = H.at(3).heldMatch;
+        imageCoord6.at<cv::Point2f>(1) = H.at(1).heldMatch;
+        imageCoord6.at<cv::Point2f>(2) = H.at(2).heldMatch;
+        imageCoord6.at<cv::Point2f>(3) = H.at(0).heldMatch;
+
+        imageCoord7.at<cv::Point2f>(0) = H.at(2).heldMatch;
+        imageCoord7.at<cv::Point2f>(1) = H.at(0).heldMatch;
+        imageCoord7.at<cv::Point2f>(2) = H.at(1).heldMatch;
+        imageCoord7.at<cv::Point2f>(3) = H.at(3).heldMatch;
+
+//        imageCoordVec.at(0).at<cv::Point2f>(0) = H.at(0).heldMatch;
+//        imageCoordVec.at(0).at<cv::Point2f>(1) = (cv::Point2f){1,1};
+//        imageCoordVec.at(0).at<cv::Point2f>(2) = H.at(2).heldMatch;
+//        imageCoordVec.at(0).at<cv::Point2f>(3) = H.at(3).heldMatch;
+
+//        imageCoordVec.at(1).at<cv::Point2f>(0) = H.at(1).heldMatch;
+//        imageCoordVec.at(1).at<cv::Point2f>(1) = (cv::Point2f){2,2};
+//        imageCoordVec.at(1).at<cv::Point2f>(2) = H.at(3).heldMatch;
+//        imageCoordVec.at(1).at<cv::Point2f>(3) = H.at(2).heldMatch;
+
+//        imageCoordVec.at(2).at<cv::Point2f>(0) = H.at(0).heldMatch;
+//        imageCoordVec.at(2).at<cv::Point2f>(1) = H.at(2).heldMatch;
+//        imageCoordVec.at(2).at<cv::Point2f>(2) = H.at(1).heldMatch;
+//        imageCoordVec.at(2).at<cv::Point2f>(3) = H.at(3).heldMatch;
+
+//        imageCoordVec.at(3).at<cv::Point2f>(0) = H.at(1).heldMatch;
+//        imageCoordVec.at(3).at<cv::Point2f>(1) = H.at(3).heldMatch;
+//        imageCoordVec.at(3).at<cv::Point2f>(2) = H.at(0).heldMatch;
+//        imageCoordVec.at(3).at<cv::Point2f>(3) = H.at(2).heldMatch;
+
+//        imageCoordVec.at(4).at<cv::Point2f>(0) = H.at(3).heldMatch;
+//        imageCoordVec.at(4).at<cv::Point2f>(1) = H.at(2).heldMatch;
+//        imageCoordVec.at(4).at<cv::Point2f>(2) = H.at(1).heldMatch;
+//        imageCoordVec.at(4).at<cv::Point2f>(3) = H.at(0).heldMatch;
+
+//        imageCoordVec.at(5).at<cv::Point2f>(0) = H.at(2).heldMatch;
+//        imageCoordVec.at(5).at<cv::Point2f>(1) = H.at(3).heldMatch;
+//        imageCoordVec.at(5).at<cv::Point2f>(2) = H.at(0).heldMatch;
+//        imageCoordVec.at(5).at<cv::Point2f>(3) = H.at(1).heldMatch;
+
+//        imageCoordVec.at(6).at<cv::Point2f>(0) = H.at(3).heldMatch;
+//        imageCoordVec.at(6).at<cv::Point2f>(1) = H.at(1).heldMatch;
+//        imageCoordVec.at(6).at<cv::Point2f>(2) = H.at(2).heldMatch;
+//        imageCoordVec.at(6).at<cv::Point2f>(3) = H.at(0).heldMatch;
+
+//        imageCoordVec.at(7).at<cv::Point2f>(0) = H.at(2).heldMatch;
+//        imageCoordVec.at(7).at<cv::Point2f>(1) = H.at(0).heldMatch;
+//        imageCoordVec.at(7).at<cv::Point2f>(2) = H.at(3).heldMatch;
+//        imageCoordVec.at(7).at<cv::Point2f>(3) = H.at(1).heldMatch;
     }
     else
     {
@@ -47,7 +130,43 @@ cv::Mat MarkerLayout::getWorldCoord()
 
 cv::Mat MarkerLayout::getImageCoord(int orientation)
 {
-    return imageCoordVec.at(orientation);
+    if (orientation == 0)
+    {
+        return imageCoord0;
+    }
+    else if (orientation == 1)
+    {
+        return imageCoord1;
+    }
+    else if (orientation == 2)
+    {
+        return imageCoord2;
+    }
+    else if (orientation == 3)
+    {
+        return imageCoord3;
+    }
+    else if (orientation == 4)
+    {
+        return imageCoord4;
+    }
+    else if (orientation == 5)
+    {
+        return imageCoord5;
+    }
+    else if (orientation == 6)
+    {
+        return imageCoord6;
+    }
+    else if (orientation == 7)
+    {
+        return imageCoord7;
+    }
+    else
+    {
+        std::cout << "error" << std::endl;
+    }
+//    return imageCoordVec.at(orientation);
 }
 
 std::vector<HoldPoint> MarkerLayout::sortPointsVertically(std::vector<HoldPoint> H)
@@ -75,6 +194,7 @@ std::vector<HoldPoint> MarkerLayout::sortPointsVertically(std::vector<HoldPoint>
     {
         if (jj < numMarkers)
         {
+//            std::cout << it->heldMatch << std::endl;
             Hvector.push_back(*it);
             imageCoord.at<cv::Point2f>(jj) = it->heldMatch;
             jj++;
@@ -146,4 +266,68 @@ std::list<HoldPoint> MarkerLayout::merge(std::list<HoldPoint> left, std::list<Ho
         right.pop_front();
     }
     return result;
+}
+
+void MarkerLayout::averageVec (cv::Mat rvec, cv::Mat tvec)
+{
+    static std::queue<double> rvecQueue0;
+    static std::queue<double> rvecQueue1;
+    static std::queue<double> rvecQueue2;
+    static std::queue<double> tvecQueue0;
+    static std::queue<double> tvecQueue1;
+    static  std::queue<double> tvecQueue2;
+
+    static double rvecSum0;
+    static double rvecSum1;
+    static  double rvecSum2;
+    static double tvecSum0;
+    static double tvecSum1;
+    static double tvecSum2;
+
+    // Add vectors to sum
+    rvecSum0 = rvecSum0 + rvec.at<double>(0);
+    rvecSum1 = rvecSum1 + rvec.at<double>(1);
+    rvecSum2 = rvecSum2 + rvec.at<double>(2);
+    tvecSum0 = tvecSum0 + tvec.at<double>(0);
+    tvecSum1 = tvecSum1 + tvec.at<double>(1);
+    tvecSum2 = tvecSum2 + tvec.at<double>(2);
+
+    // Add vectors to queue
+    rvecQueue0.push(rvec.at<double>(0));
+    rvecQueue1.push(rvec.at<double>(1));
+    rvecQueue2.push(rvec.at<double>(2));
+    tvecQueue0.push(tvec.at<double>(0));
+    tvecQueue1.push(tvec.at<double>(1));
+    tvecQueue2.push(tvec.at<double>(2));
+
+    if (rvecQueue0.size() >= 5)
+    {
+        double rvecOld0 = rvecQueue0.front();
+        double rvecOld1 = rvecQueue1.front();
+        double rvecOld2 = rvecQueue2.front();
+        double tvecOld0 = tvecQueue0.front();
+        double tvecOld1 = tvecQueue1.front();
+        double tvecOld2 = tvecQueue2.front();
+
+        rvecQueue0.pop();
+        rvecQueue1.pop();
+        rvecQueue2.pop();
+        tvecQueue0.pop();
+        tvecQueue1.pop();
+        tvecQueue2.pop();
+
+        rvecSum0 = rvecSum0 - rvecOld0;
+        rvecSum1 = rvecSum1 - rvecOld1;
+        rvecSum2 = rvecSum2 - rvecOld2;
+        tvecSum0 = tvecSum0 - tvecOld0;
+        tvecSum1 = tvecSum1 - tvecOld1;
+        tvecSum2 = tvecSum2 - tvecOld2;
+
+        rvec.at<double>(0) = rvecSum0 / rvecQueue0.size();
+        rvec.at<double>(1) = rvecSum1 / rvecQueue1.size();
+        rvec.at<double>(2) = rvecSum2 / rvecQueue2.size();
+        tvec.at<double>(0) = tvecSum0 / tvecQueue0.size();
+        tvec.at<double>(1) = tvecSum1 / tvecQueue1.size();
+        tvec.at<double>(2) = tvecSum2 / tvecQueue2.size();
+    }
 }

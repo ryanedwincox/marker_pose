@@ -7,7 +7,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 
-#define NUM_BARCODES 2
+#define NUM_BARCODES 1
 
 class Barcode
 {

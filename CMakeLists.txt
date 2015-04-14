@@ -44,7 +44,9 @@ set(SOURCE_FILES
     src/holdpoint.h
     src/search.cpp
     src/search.h
-    src/markerPose.cpp
+    src/kalman.cpp
+    src/kalman.h
+    src/main.cpp
     cl/findSSL.cl
     manifest.xml
 )
