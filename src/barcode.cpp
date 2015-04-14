@@ -88,6 +88,25 @@ void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
     cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
 }
 
+// return true if z axis of marker transform is pointed towards the camera
+bool Barcode::zDirection(cv::Mat rvec)
+{
+    cv::Mat R(3,3,cv::DataType<double>::type);
+    cv::Mat Z(3,1,cv::DataType<double>::type);
+    cv::Mat zVec(3,1,cv::DataType<double>::type);
+
+    Z.at<double>(0) = 0;
+    Z.at<double>(1) = 0;
+    Z.at<double>(2) = 1;
+
+    cv::Rodrigues(rvec, R);
+    zVec = R*Z;
+
+//    std::cout << zVec << std::endl;
+
+    return zVec.at<double>(2) < 0;
+}
+
 int Barcode::getMarkerNumber(cv::Mat imgBin)
 {
     // Get barcode value

@@ -16,6 +16,7 @@ public:
     cv::Mat projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec);
     cv::Mat projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec);
     void projectSamplePoints(cv::Mat rvec, cv::Mat tvec);
+    bool zDirection(cv::Mat rvec);
     void setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h);
     int getMarkerNumber(cv::Mat imgBin);
     int getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h);
