@@ -17,9 +17,9 @@ Barcode::Barcode()
     barcodes[0][3] = 1; barcodes[0][4] = 0; barcodes[0][5] = 0;
     barcodes[0][6] = 0; barcodes[0][7] = 0; barcodes[0][8] = 0;
 
-//    barcodes[1][0] = 0; barcodes[1][1] = 1; barcodes[1][2] = 0;
-//    barcodes[1][3] = 0; barcodes[1][4] = 0; barcodes[1][5] = 0;
-//    barcodes[1][6] = 0; barcodes[1][7] = 0; barcodes[1][8] = 0;
+    barcodes[1][0] = 0; barcodes[1][1] = 0; barcodes[1][2] = 0;
+    barcodes[1][3] = 1; barcodes[1][4] = 0; barcodes[1][5] = 0;
+    barcodes[1][6] = 0; barcodes[1][7] = 1; barcodes[1][8] = 0;
 
 //    barcodes[2][0] = 0; barcodes[2][1] = 0; barcodes[2][2] = 0;
 //    barcodes[2][3] = 0; barcodes[2][4] = 0; barcodes[2][5] = 1;
@@ -70,6 +70,11 @@ cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
     cv::line(img, projectedGrid[2], projectedGrid[0], cv::Scalar(255,0,0), 2);
     cv::line(img, projectedGrid[3], projectedGrid[2], cv::Scalar(255,255,0), 2);
 
+    // TODO print marker number on image
+//    char *intStr = std::itoa(markerNumber);
+//    string str = string(intStr);
+//    cv::putText(img, str, projectedGrid[0], cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 2, 1);
+
     return img;
 }
 
@@ -104,24 +109,33 @@ bool Barcode::zDirection(cv::Mat rvec)
 
 //    std::cout << zVec << std::endl;
 
-    return zVec.at<double>(2) < 0;
+    return zVec.at<double>(2) <= 0;
 }
 
 int Barcode::getMarkerNumber(cv::Mat imgBin)
 {
     // Get barcode value
-    int barcodeInput [9];
-    for (int i = 0; i < 8; i++)
+    int numSamples = 9; // for 3x3 grid
+    int barcodeInput [numSamples];
+
+//    std::cout << "desired barcode: ";
+//    for (int i = 0; i < numSamples; i++)
+//    {
+//        std::cout << barcodes[1][i];
+//    }
+//    std::cout << std::endl;
+
+//    std::cout << "barcode input: ";
+    for (int i = 0; i < numSamples; i++)
     {
         barcodeInput[i] = getSectionValue(imgBin, projectedSamplePoints[i], w, h);
-//        std::cout << barcodeInput[i] << std::endl;
+//        std::cout << barcodeInput[i];
     }
 
     for (int j = 0; j < NUM_BARCODES; j++)
     {
-    int j = 0;
         bool match = true;
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < numSamples; i++)
         {
             if (barcodeInput[i] != barcodes[j][i])
             {
@@ -130,9 +144,12 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
         }
         if (match)
         {
+//            std::cout << " match #: " << j << std::endl;
+            markerNumber = j;
             return j;
         }
     }
+//    std::cout << std::endl;
     return -1;
 
 }

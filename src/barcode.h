@@ -6,8 +6,9 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
+#include <string>
 
-#define NUM_BARCODES 1
+#define NUM_BARCODES 2
 
 class Barcode
 {
@@ -24,6 +25,7 @@ public:
 private:
     int w;
     int h;
+    int markerNumber;
     cv::Mat cameraMatrix;
     cv::Mat distCoeffs;
     cv::Mat axis;
