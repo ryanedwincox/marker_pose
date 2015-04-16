@@ -30,6 +30,7 @@ private:
     std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 
     // Variables
+    int averageingWindow;
     cv::Mat worldCoord;
     cv::Mat imageCoord;
     cv::Mat imageCoord0;

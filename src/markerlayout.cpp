@@ -26,6 +26,7 @@ MarkerLayout::MarkerLayout()
 //    imageCoordVec = std::vector<cv::Mat>(8, imageCoord);
 
     enoughMarkers = false;
+    averageingWindow = 5;
 }
 
 // takes a vertically sorted vector of HoldPoints and puts them in imageCoordVec in every possible order
@@ -37,6 +38,7 @@ void MarkerLayout::setImageCoord(std::vector<HoldPoint> H)
         enoughMarkers = true;
 
         // fill in all imageCoordVec permutations.  There should be 8 total
+        // TODO there could actually be more if you're looking in from the side closely
         imageCoord0.at<cv::Point2f>(0) = H.at(0).heldMatch;
         imageCoord0.at<cv::Point2f>(1) = H.at(1).heldMatch;
         imageCoord0.at<cv::Point2f>(2) = H.at(2).heldMatch;
@@ -300,7 +302,7 @@ void MarkerLayout::averageVec (cv::Mat rvec, cv::Mat tvec)
     tvecQueue1.push(tvec.at<double>(1));
     tvecQueue2.push(tvec.at<double>(2));
 
-    if (rvecQueue0.size() >= 5)
+    if (rvecQueue0.size() >= averageingWindow)
     {
         double rvecOld0 = rvecQueue0.front();
         double rvecOld1 = rvecQueue1.front();

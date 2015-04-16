@@ -13,12 +13,16 @@ public:
     HoldPoint();
     ~HoldPoint();
     void update(cv::Point avgMatches);
+    std::vector<HoldPoint> holdPoints(std::vector<HoldPoint> H, std::list<cv::Point> avgMatches);
 
+    cv::Point prevPoint;
+    cv::Point heldMatch;
+
+private:
     int count;
     int timeout;
     bool checked;
-    cv::Point prevPoint;
-    cv::Point heldMatch;
+    int radius;
 };
 
 #endif // HOLDPOINT_H
