@@ -10,8 +10,8 @@ MarkerLayout::MarkerLayout()
     // TODO remap into meters
     worldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
     worldCoord.at<cv::Point3f>(1) = (cv::Point3f){0.2,0,0};
-    worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.3,0};
-    worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.3,0};
+    worldCoord.at<cv::Point3f>(2) = (cv::Point3f){0,0.2,0};
+    worldCoord.at<cv::Point3f>(3) = (cv::Point3f){0.2,0.2,0};
 
     // Define 2D corrdinates of markers detected in image
     imageCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
@@ -33,7 +33,7 @@ MarkerLayout::MarkerLayout()
 void MarkerLayout::setImageCoord(std::vector<HoldPoint> H)
 {
 //    std::cout << H.size() << std::endl;
-    if (H.size() >= numMarkers)
+    if (foundMarkers >= numMarkers)
     {
         enoughMarkers = true;
 
@@ -44,40 +44,40 @@ void MarkerLayout::setImageCoord(std::vector<HoldPoint> H)
         imageCoord0.at<cv::Point2f>(2) = H.at(2).heldMatch;
         imageCoord0.at<cv::Point2f>(3) = H.at(3).heldMatch;
 
-        imageCoord1.at<cv::Point2f>(0) = H.at(1).heldMatch;
-        imageCoord1.at<cv::Point2f>(1) = H.at(0).heldMatch;
-        imageCoord1.at<cv::Point2f>(2) = H.at(3).heldMatch;
-        imageCoord1.at<cv::Point2f>(3) = H.at(2).heldMatch;
+//        imageCoord1.at<cv::Point2f>(0) = H.at(1).heldMatch;
+//        imageCoord1.at<cv::Point2f>(1) = H.at(0).heldMatch;
+//        imageCoord1.at<cv::Point2f>(2) = H.at(3).heldMatch;
+//        imageCoord1.at<cv::Point2f>(3) = H.at(2).heldMatch;
 
-        imageCoord2.at<cv::Point2f>(0) = H.at(0).heldMatch;
-        imageCoord2.at<cv::Point2f>(1) = H.at(2).heldMatch;
-        imageCoord2.at<cv::Point2f>(2) = H.at(1).heldMatch;
-        imageCoord2.at<cv::Point2f>(3) = H.at(3).heldMatch;
+        imageCoord1.at<cv::Point2f>(0) = H.at(0).heldMatch;
+        imageCoord1.at<cv::Point2f>(1) = H.at(2).heldMatch;
+        imageCoord1.at<cv::Point2f>(2) = H.at(1).heldMatch;
+        imageCoord1.at<cv::Point2f>(3) = H.at(3).heldMatch;
 
-        imageCoord3.at<cv::Point2f>(0) = H.at(1).heldMatch;
-        imageCoord3.at<cv::Point2f>(1) = H.at(3).heldMatch;
-        imageCoord3.at<cv::Point2f>(2) = H.at(0).heldMatch;
-        imageCoord3.at<cv::Point2f>(3) = H.at(2).heldMatch;
+//        imageCoord3.at<cv::Point2f>(0) = H.at(1).heldMatch;
+//        imageCoord3.at<cv::Point2f>(1) = H.at(3).heldMatch;
+//        imageCoord3.at<cv::Point2f>(2) = H.at(0).heldMatch;
+//        imageCoord3.at<cv::Point2f>(3) = H.at(2).heldMatch;
 
-        imageCoord4.at<cv::Point2f>(0) = H.at(3).heldMatch;
-        imageCoord4.at<cv::Point2f>(1) = H.at(2).heldMatch;
-        imageCoord4.at<cv::Point2f>(2) = H.at(1).heldMatch;
-        imageCoord4.at<cv::Point2f>(3) = H.at(0).heldMatch;
+//        imageCoord4.at<cv::Point2f>(0) = H.at(3).heldMatch;
+//        imageCoord4.at<cv::Point2f>(1) = H.at(2).heldMatch;
+//        imageCoord4.at<cv::Point2f>(2) = H.at(1).heldMatch;
+//        imageCoord4.at<cv::Point2f>(3) = H.at(0).heldMatch;
 
-        imageCoord5.at<cv::Point2f>(0) = H.at(2).heldMatch;
-        imageCoord5.at<cv::Point2f>(1) = H.at(3).heldMatch;
-        imageCoord5.at<cv::Point2f>(2) = H.at(0).heldMatch;
-        imageCoord5.at<cv::Point2f>(3) = H.at(1).heldMatch;
+//        imageCoord5.at<cv::Point2f>(0) = H.at(2).heldMatch;
+//        imageCoord5.at<cv::Point2f>(1) = H.at(3).heldMatch;
+//        imageCoord5.at<cv::Point2f>(2) = H.at(0).heldMatch;
+//        imageCoord5.at<cv::Point2f>(3) = H.at(1).heldMatch;
 
-        imageCoord6.at<cv::Point2f>(0) = H.at(3).heldMatch;
-        imageCoord6.at<cv::Point2f>(1) = H.at(1).heldMatch;
-        imageCoord6.at<cv::Point2f>(2) = H.at(2).heldMatch;
-        imageCoord6.at<cv::Point2f>(3) = H.at(0).heldMatch;
+//        imageCoord6.at<cv::Point2f>(0) = H.at(3).heldMatch;
+//        imageCoord6.at<cv::Point2f>(1) = H.at(1).heldMatch;
+//        imageCoord6.at<cv::Point2f>(2) = H.at(2).heldMatch;
+//        imageCoord6.at<cv::Point2f>(3) = H.at(0).heldMatch;
 
-        imageCoord7.at<cv::Point2f>(0) = H.at(2).heldMatch;
-        imageCoord7.at<cv::Point2f>(1) = H.at(0).heldMatch;
-        imageCoord7.at<cv::Point2f>(2) = H.at(1).heldMatch;
-        imageCoord7.at<cv::Point2f>(3) = H.at(3).heldMatch;
+//        imageCoord7.at<cv::Point2f>(0) = H.at(2).heldMatch;
+//        imageCoord7.at<cv::Point2f>(1) = H.at(0).heldMatch;
+//        imageCoord7.at<cv::Point2f>(2) = H.at(1).heldMatch;
+//        imageCoord7.at<cv::Point2f>(3) = H.at(3).heldMatch;
 
 //        imageCoordVec.at(0).at<cv::Point2f>(0) = H.at(0).heldMatch;
 //        imageCoordVec.at(0).at<cv::Point2f>(1) = (cv::Point2f){1,1};

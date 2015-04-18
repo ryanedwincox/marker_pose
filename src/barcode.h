@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string>
 
-#define NUM_BARCODES 2
+#define NUM_BARCODES 8
 
 class Barcode
 {

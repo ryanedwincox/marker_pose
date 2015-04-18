@@ -22,7 +22,7 @@ public:
     void averageVec (cv::Mat rvec, cv::Mat tvec);
 
     bool enoughMarkers;
-    int numMarkers;
+    int foundMarkers;
 
 private:
     // sorting methods
@@ -31,6 +31,7 @@ private:
 
     // Variables
     int averageingWindow;
+    int numMarkers;
     cv::Mat worldCoord;
     cv::Mat imageCoord;
     cv::Mat imageCoord0;

@@ -17,17 +17,33 @@ Barcode::Barcode()
     barcodes[0][3] = 1; barcodes[0][4] = 0; barcodes[0][5] = 0;
     barcodes[0][6] = 0; barcodes[0][7] = 0; barcodes[0][8] = 0;
 
-    barcodes[1][0] = 0; barcodes[1][1] = 0; barcodes[1][2] = 0;
-    barcodes[1][3] = 1; barcodes[1][4] = 0; barcodes[1][5] = 0;
-    barcodes[1][6] = 0; barcodes[1][7] = 1; barcodes[1][8] = 0;
+    barcodes[1][0] = 0; barcodes[1][1] = 1; barcodes[1][2] = 0;
+    barcodes[1][3] = 0; barcodes[1][4] = 0; barcodes[1][5] = 0;
+    barcodes[1][6] = 0; barcodes[1][7] = 0; barcodes[1][8] = 0;
 
-//    barcodes[2][0] = 0; barcodes[2][1] = 0; barcodes[2][2] = 0;
-//    barcodes[2][3] = 0; barcodes[2][4] = 0; barcodes[2][5] = 1;
-//    barcodes[2][6] = 0; barcodes[2][7] = 0; barcodes[2][8] = 0;
+    barcodes[2][0] = 0; barcodes[2][1] = 0; barcodes[2][2] = 0;
+    barcodes[2][3] = 0; barcodes[2][4] = 0; barcodes[2][5] = 1;
+    barcodes[2][6] = 0; barcodes[2][7] = 0; barcodes[2][8] = 0;
 
-//    barcodes[3][0] = 0; barcodes[3][1] = 0; barcodes[3][2] = 0;
-//    barcodes[3][3] = 0; barcodes[3][4] = 0; barcodes[3][5] = 0;
-//    barcodes[3][6] = 0; barcodes[3][7] = 1; barcodes[3][8] = 0;
+    barcodes[3][0] = 0; barcodes[3][1] = 0; barcodes[3][2] = 0;
+    barcodes[3][3] = 0; barcodes[3][4] = 0; barcodes[3][5] = 0;
+    barcodes[3][6] = 0; barcodes[3][7] = 1; barcodes[3][8] = 0;
+
+    barcodes[4][0] = 0; barcodes[4][1] = 1; barcodes[4][2] = 0;
+    barcodes[4][3] = 1; barcodes[4][4] = 0; barcodes[4][5] = 0;
+    barcodes[4][6] = 0; barcodes[4][7] = 0; barcodes[4][8] = 0;
+
+    barcodes[5][0] = 0; barcodes[5][1] = 1; barcodes[5][2] = 0;
+    barcodes[5][3] = 0; barcodes[5][4] = 0; barcodes[5][5] = 1;
+    barcodes[5][6] = 0; barcodes[5][7] = 0; barcodes[5][8] = 0;
+
+    barcodes[6][0] = 0; barcodes[6][1] = 0; barcodes[6][2] = 0;
+    barcodes[6][3] = 0; barcodes[6][4] = 0; barcodes[6][5] = 1;
+    barcodes[6][6] = 0; barcodes[6][7] = 1; barcodes[6][8] = 0;
+
+    barcodes[7][0] = 0; barcodes[7][1] = 0; barcodes[7][2] = 0;
+    barcodes[7][3] = 1; barcodes[7][4] = 0; barcodes[7][5] = 0;
+    barcodes[7][6] = 0; barcodes[7][7] = 1; barcodes[7][8] = 0;
 }
 
 void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h)
@@ -58,10 +74,10 @@ cv::Mat Barcode::projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 {
     // Project barcode layout
-    barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){0.04,0.09,0};
-    barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){0.16,0.09,0};
-    barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){0.04,0.21,0};
-    barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){0.16,0.21,0};
+    barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){0.04,0.04,0};
+    barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){0.16,0.04,0};
+    barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){0.04,0.16,0};
+    barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){0.16,0.16,0};
 
     cv::projectPoints(barcodeGrid, rvec, tvec, cameraMatrix, distCoeffs, projectedGrid);
 
@@ -80,15 +96,15 @@ cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 
 void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
 {
-    samplePoints.at<cv::Point3f>(0) = (cv::Point3f){0.06,0.11,0};
-    samplePoints.at<cv::Point3f>(1) = (cv::Point3f){0.10,0.11,0};
-    samplePoints.at<cv::Point3f>(2) = (cv::Point3f){0.14,0.11,0};
-    samplePoints.at<cv::Point3f>(3) = (cv::Point3f){0.06,0.15,0};
-    samplePoints.at<cv::Point3f>(4) = (cv::Point3f){0.10,0.15,0};
-    samplePoints.at<cv::Point3f>(5) = (cv::Point3f){0.14,0.15,0};
-    samplePoints.at<cv::Point3f>(6) = (cv::Point3f){0.06,0.19,0};
-    samplePoints.at<cv::Point3f>(7) = (cv::Point3f){0.10,0.19,0};
-    samplePoints.at<cv::Point3f>(8) = (cv::Point3f){0.14,0.19,0};
+    samplePoints.at<cv::Point3f>(0) = (cv::Point3f){0.06,0.06,0};
+    samplePoints.at<cv::Point3f>(1) = (cv::Point3f){0.10,0.06,0};
+    samplePoints.at<cv::Point3f>(2) = (cv::Point3f){0.14,0.06,0};
+    samplePoints.at<cv::Point3f>(3) = (cv::Point3f){0.06,0.10,0};
+    samplePoints.at<cv::Point3f>(4) = (cv::Point3f){0.10,0.10,0};
+    samplePoints.at<cv::Point3f>(5) = (cv::Point3f){0.14,0.10,0};
+    samplePoints.at<cv::Point3f>(6) = (cv::Point3f){0.06,0.14,0};
+    samplePoints.at<cv::Point3f>(7) = (cv::Point3f){0.10,0.14,0};
+    samplePoints.at<cv::Point3f>(8) = (cv::Point3f){0.14,0.14,0};
 
     cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
 }
