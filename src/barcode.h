@@ -7,7 +7,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <string>
+#include "math.h"
 
+#define PI 3.1415926
 #define NUM_BARCODES 8
 
 class Barcode
@@ -21,6 +23,7 @@ public:
     void setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h);
     int getMarkerNumber(cv::Mat imgBin);
     int getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h);
+    void rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec);
 
 private:
     int w;

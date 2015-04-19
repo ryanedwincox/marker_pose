@@ -29,20 +29,20 @@ Barcode::Barcode()
     barcodes[3][3] = 0; barcodes[3][4] = 0; barcodes[3][5] = 0;
     barcodes[3][6] = 0; barcodes[3][7] = 1; barcodes[3][8] = 0;
 
-    barcodes[4][0] = 0; barcodes[4][1] = 1; barcodes[4][2] = 0;
+    barcodes[4][0] = 0; barcodes[4][1] = 0; barcodes[4][2] = 0;
     barcodes[4][3] = 1; barcodes[4][4] = 0; barcodes[4][5] = 0;
-    barcodes[4][6] = 0; barcodes[4][7] = 0; barcodes[4][8] = 0;
+    barcodes[4][6] = 0; barcodes[4][7] = 1; barcodes[4][8] = 0;
 
     barcodes[5][0] = 0; barcodes[5][1] = 1; barcodes[5][2] = 0;
-    barcodes[5][3] = 0; barcodes[5][4] = 0; barcodes[5][5] = 1;
+    barcodes[5][3] = 1; barcodes[5][4] = 0; barcodes[5][5] = 0;
     barcodes[5][6] = 0; barcodes[5][7] = 0; barcodes[5][8] = 0;
 
-    barcodes[6][0] = 0; barcodes[6][1] = 0; barcodes[6][2] = 0;
+    barcodes[6][0] = 0; barcodes[6][1] = 1; barcodes[6][2] = 0;
     barcodes[6][3] = 0; barcodes[6][4] = 0; barcodes[6][5] = 1;
-    barcodes[6][6] = 0; barcodes[6][7] = 1; barcodes[6][8] = 0;
+    barcodes[6][6] = 0; barcodes[6][7] = 0; barcodes[6][8] = 0;
 
     barcodes[7][0] = 0; barcodes[7][1] = 0; barcodes[7][2] = 0;
-    barcodes[7][3] = 1; barcodes[7][4] = 0; barcodes[7][5] = 0;
+    barcodes[7][3] = 0; barcodes[7][4] = 0; barcodes[7][5] = 1;
     barcodes[7][6] = 0; barcodes[7][7] = 1; barcodes[7][8] = 0;
 }
 
@@ -168,6 +168,31 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
 //    std::cout << std::endl;
     return -1;
 
+}
+
+void Barcode::rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec)
+{
+    for (int i = 0; i < num; i++)
+    {
+        // Use barcode number to correct origin
+        cv::Mat rMat(3,3,cv::DataType<double>::type);
+        cv::Mat affineRotation(3,3,cv::DataType<double>::type);
+        cv::Mat translate(3,1,cv::DataType<double>::type);
+        double theta = -PI/2; // radians
+        affineRotation.at<double>(0,0) = cos(theta); affineRotation.at<double>(0,1) = sin(theta); affineRotation.at<double>(0,2) = 0;
+        affineRotation.at<double>(1,0) = -sin(theta); affineRotation.at<double>(1,1) = cos(theta); affineRotation.at<double>(1,2) = 0;
+        affineRotation.at<double>(2,0) = 0; affineRotation.at<double>(2,1) = 0; affineRotation.at<double>(2,2) = 1;
+
+        translate.at<double>(0) = 0.2;
+        translate.at<double>(1) = 0;
+        translate.at<double>(2) = 0;
+
+        // Apply affine transformation
+        cv::Rodrigues(*rvec, rMat);
+        *tvec = *tvec+rMat*translate;
+        rMat = rMat*affineRotation;
+        cv::Rodrigues(rMat, *rvec);
+    }
 }
 
 // TODO sample and average several points
