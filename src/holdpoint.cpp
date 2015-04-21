@@ -3,7 +3,7 @@
 HoldPoint::HoldPoint()
 {
     count = 0;
-    timeout = 1;
+    timeout = 10;
     checked = false;
     radius = 50;
 }
