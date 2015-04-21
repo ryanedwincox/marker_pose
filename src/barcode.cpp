@@ -4,12 +4,12 @@ Barcode::Barcode()
 {
     cameraMatrix = cv::Mat(3,3,cv::DataType<double>::type);
     distCoeffs = cv::Mat(5,1,cv::DataType<double>::type);
-    axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
+
     barcodeGrid = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
     samplePoints = cv::Mat(9,1,cv::DataType<cv::Point3f>::type);
 
-    projectedAxis = std::vector<cv::Point2f>();
-    projectedGrid = std::vector<cv::Point2f>();
+
+
     projectedSamplePoints = std::vector<cv::Point2f>();
 
     // define barcode patterns
@@ -54,74 +54,9 @@ void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w
     this->h = h;
 }
 
-cv::Mat Barcode::projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec, MarkerLayout marker)
-{
-    // get marker world transform
-    cv::Mat worldTransform = marker.getWorldTransform();
 
-    // create input transform from rvec tvec
-    cv::Mat rMat = cv::Mat(3,3,cv::DataType<double>::type);
-    cv::Rodrigues(rvec, rMat);
-    cv::Mat markerTransform = cv::Mat(4,4,cv::DataType<double>::type);;
-    markerTransform.at<double>(0,0) = rMat.at<double>(0,0); markerTransform.at<double>(0,1) = rMat.at<double>(0,1); markerTransform.at<double>(0,2) = rMat.at<double>(0,2); markerTransform.at<double>(0,3) = tvec.at<double>(0);
-    markerTransform.at<double>(1,0) = rMat.at<double>(1,0); markerTransform.at<double>(1,1) = rMat.at<double>(1,1); markerTransform.at<double>(1,2) = rMat.at<double>(1,2); markerTransform.at<double>(1,3) = tvec.at<double>(1);
-    markerTransform.at<double>(2,0) = rMat.at<double>(2,0); markerTransform.at<double>(2,1) = rMat.at<double>(2,1); markerTransform.at<double>(2,2) = rMat.at<double>(2,2); markerTransform.at<double>(2,3) = tvec.at<double>(2);
-    markerTransform.at<double>(3,0) = 0;                    markerTransform.at<double>(3,1) = 0;                    markerTransform.at<double>(3,2) = 0;                    markerTransform.at<double>(3,3) = 1;
 
-    // transform rvec and tvec to create new rvec tvec
-    cv::Mat markerWorld = markerTransform * worldTransform;
 
-    cv::Mat rMatNew = cv::Mat(3,3,cv::DataType<double>::type);;
-    cv::Mat rvecNew = cv::Mat(3,1,cv::DataType<double>::type);;
-    cv::Mat tvecNew = cv::Mat(3,1,cv::DataType<double>::type);;
-
-    rMatNew.at<double>(0,0) = markerWorld.at<double>(0,0); rMatNew.at<double>(0,1) = markerWorld.at<double>(0,1); rMatNew.at<double>(0,2) = markerWorld.at<double>(0,2);
-    rMatNew.at<double>(1,0) = markerWorld.at<double>(1,0); rMatNew.at<double>(1,1) = markerWorld.at<double>(1,1); rMatNew.at<double>(1,2) = markerWorld.at<double>(1,2);
-    rMatNew.at<double>(2,0) = markerWorld.at<double>(2,0); rMatNew.at<double>(2,1) = markerWorld.at<double>(2,1); rMatNew.at<double>(2,2) = markerWorld.at<double>(2,2);
-
-    cv::Rodrigues(rMatNew, rvecNew);
-
-    tvecNew.at<double>(0) = markerWorld.at<double>(0,3);
-    tvecNew.at<double>(1) = markerWorld.at<double>(1,3);
-    tvecNew.at<double>(2) = markerWorld.at<double>(2,3);
-
-    // project axis
-    axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-    axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
-    axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
-    axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
-
-    cv::projectPoints(axis, rvecNew, tvecNew, cameraMatrix, distCoeffs, projectedAxis);
-
-    cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
-    cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
-    cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
-
-    return img;
-}
-
-cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
-{
-    // Project barcode layout
-    barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){-0.031,-0.031,0};
-    barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){-0.031, 0.031,0};
-    barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){ 0.031,-0.031,0};
-    barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){ 0.031, 0.031,0};
-
-    cv::projectPoints(barcodeGrid, rvec, tvec, cameraMatrix, distCoeffs, projectedGrid);
-
-    cv::line(img, projectedGrid[0], projectedGrid[1], cv::Scalar(0,0,255), 2);
-    cv::line(img, projectedGrid[1], projectedGrid[3], cv::Scalar(0,255,0), 2);
-    cv::line(img, projectedGrid[2], projectedGrid[0], cv::Scalar(255,0,0), 2);
-    cv::line(img, projectedGrid[3], projectedGrid[2], cv::Scalar(255,255,0), 2);
-
-    // TODO print marker number on image
-//    char *intStr = std::itoa(markerNumber);
-//    string str = string(intStr);
-//    cv::putText(img, str, projectedGrid[0], cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 2, 1);
-
-    return img;
-}
 
 void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
 {

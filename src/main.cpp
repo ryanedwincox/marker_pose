@@ -326,32 +326,30 @@ int main(int argc, char *argv[])
         if (marker1.enoughMarkers)
         {
             // estimate pose
-            poseEstimation(imgBin, rvec1, tvec1, w, h, cameraMatrix, distCoeffs, marker1, barcode, comb);
+            marker1.poseEstimation(imgBin, w, h, cameraMatrix, distCoeffs, barcode);
 
-            if (!(rvec1.at<double>(0) == 0 && rvec1.at<double>(1) == 0 && rvec1.at<double>(2) == 0 &&
-                  tvec1.at<double>(0) == 0 && tvec1.at<double>(1) == 0 && tvec1.at<double>(2) == 0))
+            if (!marker1.markerTransformationZero())
             {
-//                marker1.averageVec(rvec1, tvec1);
+//                marker1.averageVec();
 
-                img = barcode.projectAxis(img, rvec1, tvec1, marker1);
+                img = marker1.projectAxis(img, barcode);
 
-                img = barcode.projectBarcodeGrid(img, rvec1, tvec1);
+                img = marker1.projectBarcodeGrid(img, barcode);
             }
         }
 
         if (marker2.enoughMarkers)
         {
             // estimate pose
-            poseEstimation(imgBin, rvec2, tvec2, w, h, cameraMatrix, distCoeffs, marker2, barcode, comb);
+            marker2.poseEstimation(imgBin, w, h, cameraMatrix, distCoeffs, barcode);
 
-            if (!(rvec2.at<double>(0) == 0 && rvec2.at<double>(1) == 0 && rvec2.at<double>(2) == 0 &&
-                  tvec2.at<double>(0) == 0 && tvec2.at<double>(1) == 0 && tvec2.at<double>(2) == 0))
+            if (!marker2.markerTransformationZero())
             {
-//                marker2.averageVec(rvec2, tvec2);
+//                marker2.averageVec();
 
-                img = barcode.projectAxis(img, rvec2, tvec2, marker2);
+                img = marker2.projectAxis(img, barcode);
 
-                img = barcode.projectBarcodeGrid(img, rvec2, tvec2);
+                img = marker2.projectBarcodeGrid(img, barcode);
             }
         }
 
@@ -363,7 +361,7 @@ int main(int argc, char *argv[])
               tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
         {
             // Average transformation only when its a valid transformation
-            marker1.averageVec (rvec, tvec);
+            marker1.averageVec ();
 
             // project axis
 //            img = barcode.projectAxis(img, rvec, tvec, marker1);
@@ -434,81 +432,81 @@ void publishMarkerTF()
 
 
 
-// POSE ESTIMATION
-void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, MarkerLayout marker, Barcode barcode, Combinations comb)
-{
+//// POSE ESTIMATION
+//void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, MarkerLayout marker, Barcode barcode, Combinations comb)
+//{
 
-//    std::cout << "pose estimation" << std::endl;
+////    std::cout << "pose estimation" << std::endl;
 
-    int flags = cv::ITERATIVE;
-    bool useExtrinsicGuess = false;
-    int numOrientations = 2;
+//    int flags = cv::ITERATIVE;
+//    bool useExtrinsicGuess = false;
+//    int numOrientations = 2;
 
-    int foundMarker = -1;
-    int markerID = -1;
+//    int foundMarker = -1;
+//    int markerID = -1;
 
-//  **** combination test code
-//    int num = 5;
-//    int arr [num];
-//    for (int i = 0; i < num; i++)
+////  **** combination test code
+////    int num = 5;
+////    int arr [num];
+////    for (int i = 0; i < num; i++)
+////    {
+////        arr[i] = i;
+////    }
+////    comb.printCombination(arr, num);
+
+////    for (int i=0; i<comb.numCombinations; i++)
+////    {
+////        for (int j=0; j<comb.r; j++)
+////        {
+////            printf("%d ",comb.combinations[i][j]);
+////        }
+////        printf("\n");
+////    }
+//    // ****
+
+//    // Iterate through possible orientations for 4 markers
+//    for (int i = 0; i < numOrientations; i++)
 //    {
-//        arr[i] = i;
-//    }
-//    comb.printCombination(arr, num);
+//        cv::solvePnP(marker.getWorldCoord(), marker.getImageCoord(i), cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
-//    for (int i=0; i<comb.numCombinations; i++)
-//    {
-//        for (int j=0; j<comb.r; j++)
+//        // if rvec and tvec != 0
+//        if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
+//            tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
 //        {
-//            printf("%d ",comb.combinations[i][j]);
+//            barcode.projectSamplePoints(rvec, tvec);
+
+//            // Get barcode value
+//            foundMarker = barcode.getMarkerNumber(imgBin);
+//            markerID = foundMarker/4;
+//            int rotNum = foundMarker%4;
+
+//            barcode.rotateOrigin(rotNum, &rvec, &tvec);
+
+//            // if marker is found and not looking from behind
+//            if (foundMarker != -1 && barcode.zDirection(rvec))
+//            {
+//                std::cout << "found marker number: " << markerID << std::endl;
+////                std::cout << "mod: " << rotNum << std::endl;
+
+//                i = 100; // break out of loop
+//            }
 //        }
-//        printf("\n");
 //    }
-    // ****
+//    if (foundMarker == -1)
+//    {
+//        std::cout << "no marker found" << std::endl;
 
-    // Iterate through possible orientations for 4 markers
-    for (int i = 0; i < numOrientations; i++)
-    {
-        cv::solvePnP(marker.getWorldCoord(), marker.getImageCoord(i), cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+//        // reset rvec and tvec
+//        rvec.at<double>(0) = 0;
+//        rvec.at<double>(1) = 0;
+//        rvec.at<double>(2) = 0;
 
-        // if rvec and tvec != 0
-        if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
-            tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
-        {
-            barcode.projectSamplePoints(rvec, tvec);
+//        tvec.at<double>(0) = 0;
+//        tvec.at<double>(1) = 0;
+//        tvec.at<double>(2) = 0;
+//    }
 
-            // Get barcode value
-            foundMarker = barcode.getMarkerNumber(imgBin);
-            markerID = foundMarker/4;
-            int rotNum = foundMarker%4;
-
-            barcode.rotateOrigin(rotNum, &rvec, &tvec);
-
-            // if marker is found and not looking from behind
-            if (foundMarker != -1 && barcode.zDirection(rvec))
-            {
-                std::cout << "found marker number: " << markerID << std::endl;
-//                std::cout << "mod: " << rotNum << std::endl;
-
-                i = 100; // break out of loop
-            }
-        }
-    }
-    if (foundMarker == -1)
-    {
-        std::cout << "no marker found" << std::endl;
-
-        // reset rvec and tvec
-        rvec.at<double>(0) = 0;
-        rvec.at<double>(1) = 0;
-        rvec.at<double>(2) = 0;
-
-        tvec.at<double>(0) = 0;
-        tvec.at<double>(1) = 0;
-        tvec.at<double>(2) = 0;
-    }
-
-}
+//}
 
 
 

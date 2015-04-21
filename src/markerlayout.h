@@ -10,6 +10,7 @@
 #include <queue>
 
 #include "holdpoint.h"
+#include "barcode.h"
 
 class MarkerLayout
 {
@@ -19,10 +20,16 @@ public:
     cv::Mat getWorldCoord();
     cv::Mat getImageCoord(int orientation);
     std::vector<HoldPoint> sortPointsVertically(std::vector<HoldPoint> H);
-    void averageVec (cv::Mat rvec, cv::Mat tvec);
+    void averageVec();
     void setWorldTransform(cv::Mat worldTransform);
     cv::Mat getWorldTransform();
+    void poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Barcode barcode);
+    bool markerTransformationZero();
+    cv::Mat projectAxis(cv::Mat img, Barcode barcode);
+    cv::Mat projectBarcodeGrid(cv::Mat img, Barcode barcode);
 
+    cv::Mat rvec;
+    cv::Mat tvec;
     bool enoughMarkers;
     int foundMarkers;
 
@@ -40,6 +47,9 @@ private:
     cv::Mat imageCoord;
     cv::Mat imageCoord0;
     cv::Mat imageCoord1;
+    cv::Mat axis;
+    std::vector<cv::Point2f> projectedAxis;
+    std::vector<cv::Point2f> projectedGrid;
     std::vector<cv::Mat> imageCoordVec;
 
 };
