@@ -74,10 +74,10 @@ cv::Mat Barcode::projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 {
     // Project barcode layout
-    barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){0.04,0.04,0};
-    barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){0.16,0.04,0};
-    barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){0.04,0.16,0};
-    barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){0.16,0.16,0};
+    barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){-0.031,-0.031,0};
+    barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){-0.031, 0.031,0};
+    barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){ 0.031,-0.031,0};
+    barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){ 0.031, 0.031,0};
 
     cv::projectPoints(barcodeGrid, rvec, tvec, cameraMatrix, distCoeffs, projectedGrid);
 
@@ -96,15 +96,16 @@ cv::Mat Barcode::projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
 
 void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
 {
-    samplePoints.at<cv::Point3f>(0) = (cv::Point3f){0.06,0.06,0};
-    samplePoints.at<cv::Point3f>(1) = (cv::Point3f){0.10,0.06,0};
-    samplePoints.at<cv::Point3f>(2) = (cv::Point3f){0.14,0.06,0};
-    samplePoints.at<cv::Point3f>(3) = (cv::Point3f){0.06,0.10,0};
-    samplePoints.at<cv::Point3f>(4) = (cv::Point3f){0.10,0.10,0};
-    samplePoints.at<cv::Point3f>(5) = (cv::Point3f){0.14,0.10,0};
-    samplePoints.at<cv::Point3f>(6) = (cv::Point3f){0.06,0.14,0};
-    samplePoints.at<cv::Point3f>(7) = (cv::Point3f){0.10,0.14,0};
-    samplePoints.at<cv::Point3f>(8) = (cv::Point3f){0.14,0.14,0};
+    float d = 0.02;
+    samplePoints.at<cv::Point3f>(0) = (cv::Point3f){-d,-d,0};
+    samplePoints.at<cv::Point3f>(1) = (cv::Point3f){ 0,-d,0};
+    samplePoints.at<cv::Point3f>(2) = (cv::Point3f){ d,-d,0};
+    samplePoints.at<cv::Point3f>(3) = (cv::Point3f){-d, 0,0};
+    samplePoints.at<cv::Point3f>(4) = (cv::Point3f){ 0, 0,0};
+    samplePoints.at<cv::Point3f>(5) = (cv::Point3f){ d, 0,0};
+    samplePoints.at<cv::Point3f>(6) = (cv::Point3f){-d, d,0};
+    samplePoints.at<cv::Point3f>(7) = (cv::Point3f){ 0, d,0};
+    samplePoints.at<cv::Point3f>(8) = (cv::Point3f){ d, d,0};
 
     cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
 }
@@ -183,7 +184,8 @@ void Barcode::rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec)
         affineRotation.at<double>(1,0) = -sin(theta); affineRotation.at<double>(1,1) = cos(theta); affineRotation.at<double>(1,2) = 0;
         affineRotation.at<double>(2,0) = 0; affineRotation.at<double>(2,1) = 0; affineRotation.at<double>(2,2) = 1;
 
-        translate.at<double>(0) = 0.2;
+
+        translate.at<double>(0) = 0;
         translate.at<double>(1) = 0;
         translate.at<double>(2) = 0;
 

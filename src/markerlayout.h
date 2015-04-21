@@ -32,6 +32,7 @@ private:
     // Variables
     int averageingWindow;
     int numMarkers;
+    float targetSpacing;
     cv::Mat worldCoord;
     cv::Mat imageCoord;
     cv::Mat imageCoord0;
