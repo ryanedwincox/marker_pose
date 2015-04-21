@@ -18,12 +18,6 @@ MarkerLayout::MarkerLayout()
     imageCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
     imageCoord0 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
     imageCoord1 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord2 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord3 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord4 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord5 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord6 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
-    imageCoord7 = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
 //    imageCoordVec = std::vector<cv::Mat>(8, imageCoord);
 
     enoughMarkers = false;
@@ -54,6 +48,16 @@ void MarkerLayout::setImageCoord(std::vector<HoldPoint> H)
     {
         enoughMarkers = false;
     }
+}
+
+void MarkerLayout::setWorldTransform(cv::Mat worldTransform)
+{
+    this->worldTransform  = worldTransform;
+}
+
+cv::Mat MarkerLayout::getWorldTransform()
+{
+    return worldTransform;
 }
 
 cv::Mat MarkerLayout::getWorldCoord()

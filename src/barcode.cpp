@@ -54,15 +54,44 @@ void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w
     this->h = h;
 }
 
-cv::Mat Barcode::projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec)
+cv::Mat Barcode::projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec, MarkerLayout marker)
 {
+    // get marker world transform
+    cv::Mat worldTransform = marker.getWorldTransform();
+
+    // create input transform from rvec tvec
+    cv::Mat rMat = cv::Mat(3,3,cv::DataType<double>::type);
+    cv::Rodrigues(rvec, rMat);
+    cv::Mat markerTransform = cv::Mat(4,4,cv::DataType<double>::type);;
+    markerTransform.at<double>(0,0) = rMat.at<double>(0,0); markerTransform.at<double>(0,1) = rMat.at<double>(0,1); markerTransform.at<double>(0,2) = rMat.at<double>(0,2); markerTransform.at<double>(0,3) = tvec.at<double>(0);
+    markerTransform.at<double>(1,0) = rMat.at<double>(1,0); markerTransform.at<double>(1,1) = rMat.at<double>(1,1); markerTransform.at<double>(1,2) = rMat.at<double>(1,2); markerTransform.at<double>(1,3) = tvec.at<double>(1);
+    markerTransform.at<double>(2,0) = rMat.at<double>(2,0); markerTransform.at<double>(2,1) = rMat.at<double>(2,1); markerTransform.at<double>(2,2) = rMat.at<double>(2,2); markerTransform.at<double>(2,3) = tvec.at<double>(2);
+    markerTransform.at<double>(3,0) = 0;                    markerTransform.at<double>(3,1) = 0;                    markerTransform.at<double>(3,2) = 0;                    markerTransform.at<double>(3,3) = 1;
+
+    // transform rvec and tvec to create new rvec tvec
+    cv::Mat markerWorld = markerTransform * worldTransform;
+
+    cv::Mat rMatNew = cv::Mat(3,3,cv::DataType<double>::type);;
+    cv::Mat rvecNew = cv::Mat(3,1,cv::DataType<double>::type);;
+    cv::Mat tvecNew = cv::Mat(3,1,cv::DataType<double>::type);;
+
+    rMatNew.at<double>(0,0) = markerWorld.at<double>(0,0); rMatNew.at<double>(0,1) = markerWorld.at<double>(0,1); rMatNew.at<double>(0,2) = markerWorld.at<double>(0,2);
+    rMatNew.at<double>(1,0) = markerWorld.at<double>(1,0); rMatNew.at<double>(1,1) = markerWorld.at<double>(1,1); rMatNew.at<double>(1,2) = markerWorld.at<double>(1,2);
+    rMatNew.at<double>(2,0) = markerWorld.at<double>(2,0); rMatNew.at<double>(2,1) = markerWorld.at<double>(2,1); rMatNew.at<double>(2,2) = markerWorld.at<double>(2,2);
+
+    cv::Rodrigues(rMatNew, rvecNew);
+
+    tvecNew.at<double>(0) = markerWorld.at<double>(0,3);
+    tvecNew.at<double>(1) = markerWorld.at<double>(1,3);
+    tvecNew.at<double>(2) = markerWorld.at<double>(2,3);
+
     // project axis
     axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
     axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
     axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
     axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
 
-    cv::projectPoints(axis, rvec, tvec, cameraMatrix, distCoeffs, projectedAxis);
+    cv::projectPoints(axis, rvecNew, tvecNew, cameraMatrix, distCoeffs, projectedAxis);
 
     cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
     cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
@@ -180,10 +209,9 @@ void Barcode::rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec)
         cv::Mat affineRotation(3,3,cv::DataType<double>::type);
         cv::Mat translate(3,1,cv::DataType<double>::type);
         double theta = -PI/2; // radians
-        affineRotation.at<double>(0,0) = cos(theta); affineRotation.at<double>(0,1) = sin(theta); affineRotation.at<double>(0,2) = 0;
+        affineRotation.at<double>(0,0) = cos(theta);  affineRotation.at<double>(0,1) = sin(theta); affineRotation.at<double>(0,2) = 0;
         affineRotation.at<double>(1,0) = -sin(theta); affineRotation.at<double>(1,1) = cos(theta); affineRotation.at<double>(1,2) = 0;
-        affineRotation.at<double>(2,0) = 0; affineRotation.at<double>(2,1) = 0; affineRotation.at<double>(2,2) = 1;
-
+        affineRotation.at<double>(2,0) = 0;           affineRotation.at<double>(2,1) = 0;          affineRotation.at<double>(2,2) = 1;
 
         translate.at<double>(0) = 0;
         translate.at<double>(1) = 0;

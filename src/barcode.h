@@ -9,6 +9,8 @@
 #include <string>
 #include "math.h"
 
+#include "markerlayout.h"
+
 #define PI 3.1415926
 #define NUM_BARCODES 8
 
@@ -16,7 +18,7 @@ class Barcode
 {
 public:
     Barcode();
-    cv::Mat projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec);
+    cv::Mat projectAxis(cv::Mat img, cv::Mat rvec, cv::Mat tvec, MarkerLayout marker);
     cv::Mat projectBarcodeGrid(cv::Mat img, cv::Mat rvec, cv::Mat tvec);
     void projectSamplePoints(cv::Mat rvec, cv::Mat tvec);
     bool zDirection(cv::Mat rvec);

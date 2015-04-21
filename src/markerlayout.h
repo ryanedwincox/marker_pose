@@ -20,6 +20,8 @@ public:
     cv::Mat getImageCoord(int orientation);
     std::vector<HoldPoint> sortPointsVertically(std::vector<HoldPoint> H);
     void averageVec (cv::Mat rvec, cv::Mat tvec);
+    void setWorldTransform(cv::Mat worldTransform);
+    cv::Mat getWorldTransform();
 
     bool enoughMarkers;
     int foundMarkers;
@@ -33,16 +35,11 @@ private:
     int averageingWindow;
     int numMarkers;
     float targetSpacing;
+    cv::Mat worldTransform;
     cv::Mat worldCoord;
     cv::Mat imageCoord;
     cv::Mat imageCoord0;
     cv::Mat imageCoord1;
-    cv::Mat imageCoord2;
-    cv::Mat imageCoord3;
-    cv::Mat imageCoord4;
-    cv::Mat imageCoord5;
-    cv::Mat imageCoord6;
-    cv::Mat imageCoord7;
     std::vector<cv::Mat> imageCoordVec;
 
 };
