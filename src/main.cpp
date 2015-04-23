@@ -275,6 +275,9 @@ int main(int argc, char *argv[])
         marker2.foundMarkers = H2.size();
         marker2.setImageCoord(H2sorted);
 
+        marker1.setWorldCoord();
+        marker2.setWorldCoord();
+
         // reset rvec and tvec
         rvec.at<double>(0) = 0;
         rvec.at<double>(1) = 0;

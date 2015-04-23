@@ -16,11 +16,7 @@ MarkerLayout::MarkerLayout()
     // Define 3D coordinates of markers
     worldCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point3f>::type);
     // rectangle marker pattern
-    // TODO remap into meters
-    worldCoord.at<cv::Point3f>(0) = (cv::Point3f){-targetSpacing/2,-targetSpacing/2,0};
-    worldCoord.at<cv::Point3f>(1) = (cv::Point3f){ targetSpacing/2,-targetSpacing/2,0};
-    worldCoord.at<cv::Point3f>(2) = (cv::Point3f){-targetSpacing/2, targetSpacing/2,0};
-    worldCoord.at<cv::Point3f>(3) = (cv::Point3f){ targetSpacing/2, targetSpacing/2,0};
+
 
     // Define 2D corrdinates of markers detected in image
     imageCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
@@ -30,6 +26,54 @@ MarkerLayout::MarkerLayout()
 
     enoughMarkers = false;
     averageingWindow = 5;
+}
+
+void MarkerLayout::setWorldCoord()
+{
+    worldCoord.at<cv::Point3f>(0) = (cv::Point3f){-targetSpacing/2,-targetSpacing/2,0};
+    worldCoord.at<cv::Point3f>(1) = (cv::Point3f){ targetSpacing/2,-targetSpacing/2,0};
+    worldCoord.at<cv::Point3f>(2) = (cv::Point3f){-targetSpacing/2, targetSpacing/2,0};
+    worldCoord.at<cv::Point3f>(3) = (cv::Point3f){ targetSpacing/2, targetSpacing/2,0};
+}
+
+void MarkerLayout::rotateWorldCoord(int rot)
+{
+    for (int j = 0; j < rot; j++)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            cv::Mat worldPoint = cv::Mat(3,1,cv::DataType<double>::type);
+            worldPoint.at<double>(0) = (double)worldCoord.at<cv::Point3f>(i).x;
+            worldPoint.at<double>(1) = (double)worldCoord.at<cv::Point3f>(i).y;
+            worldPoint.at<double>(2) = (double)worldCoord.at<cv::Point3f>(i).z;
+    //        worldPoint.at<double>(3) = 1;
+
+            cv::Mat affineRotation(3,3,cv::DataType<double>::type);
+            double theta = PI/2; // radians
+            affineRotation.at<double>(0,0) = cos(theta);  affineRotation.at<double>(0,1) = sin(theta); affineRotation.at<double>(0,2) = 0;
+            affineRotation.at<double>(1,0) = -sin(theta); affineRotation.at<double>(1,1) = cos(theta); affineRotation.at<double>(1,2) = 0;
+            affineRotation.at<double>(2,0) = 0;           affineRotation.at<double>(2,1) = 0;          affineRotation.at<double>(2,2) = 1;
+
+    //                    std::cout << "WorldPoint: " << worldPoint << std::endl;
+    //                    std::cout << "transform: " << marker2.getWorldTransform() << std::endl;
+
+            worldPoint = affineRotation * worldPoint;
+            std::cout << "worldPoint: " << worldPoint << std::endl;
+
+            worldCoord.at<cv::Point3f>(i).x = (float)worldPoint.at<double>(0);
+            worldCoord.at<cv::Point3f>(i).y = (float)worldPoint.at<double>(1);
+            worldCoord.at<cv::Point3f>(i).z = (float)worldPoint.at<double>(2);
+        }
+    }
+
+//    for (int i = 0; i < rot; i++)
+//    {
+//        cv::Point3f temp = worldCoord.at<cv::Point3f>(0);
+//        worldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(1);
+//        worldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(2);
+//        worldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(3);
+//        worldCoord.at<cv::Point3f>(3) = temp;
+//    }
 }
 
 // takes a vertically sorted vector of HoldPoints and puts them in imageCoordVec in every possible order
@@ -118,6 +162,7 @@ void MarkerLayout::poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMa
             rotNum = foundMarker%4;
 
             barcode.rotateOrigin(rotNum, &rvec, &tvec);
+            rotateWorldCoord (rotNum);
 
             // if marker is found and not looking from behind
             if (foundMarker != -1 && barcode.zDirection(rvec))

@@ -28,6 +28,8 @@ public:
     cv::Mat projectAxis(cv::Mat img, Barcode barcode);
     cv::Mat projectBarcodeGrid(cv::Mat img, Barcode barcode);
     cv::Mat projectTransformAxis(cv::Mat img, Barcode barcode, cv::Mat newWorldTransform);
+    void setWorldCoord();
+    void rotateWorldCoord(int rot);
 
     cv::Mat rvec;
     cv::Mat tvec;
