@@ -6,8 +6,8 @@ MarkerLayout::MarkerLayout()
     targetSpacing = 0.105; // in meters
 
     // Define rvec tvec
-    rvec = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
-    tvec = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    rvec = cv::Mat(3,1,cv::DataType<double>::type);
+    tvec = cv::Mat(3,1,cv::DataType<double>::type);
 
     axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
     projectedAxis = std::vector<cv::Point2f>();
@@ -85,7 +85,7 @@ cv::Mat MarkerLayout::getImageCoord(int orientation)
     }
     else
     {
-        std::cout << "error" << std::endl;
+        std::cout << "error: requested invalid image coordinate orientation" << std::endl;
     }
 //    return imageCoordVec.at(orientation);
 }
@@ -100,7 +100,7 @@ void MarkerLayout::poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMa
     int numOrientations = 2;
 
     int foundMarker = -1;
-    int markerID = -1;
+    markerID = -1;
 
     // Iterate through both possible orientations
     for (int i = 0; i < numOrientations; i++)
@@ -108,15 +108,14 @@ void MarkerLayout::poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMa
         cv::solvePnP(getWorldCoord(), getImageCoord(i), cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
         // if rvec and tvec != 0
-        if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
-            tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
+        if (!markerTransformationZero())
         {
             barcode.projectSamplePoints(rvec, tvec);
 
             // Get barcode value
             foundMarker = barcode.getMarkerNumber(imgBin);
             markerID = foundMarker/4;
-            int rotNum = foundMarker%4;
+            rotNum = foundMarker%4;
 
             barcode.rotateOrigin(rotNum, &rvec, &tvec);
 
@@ -124,6 +123,7 @@ void MarkerLayout::poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMa
             if (foundMarker != -1 && barcode.zDirection(rvec))
             {
                 std::cout << "found marker number: " << markerID << std::endl;
+                imgCoordOrientation = i;
 //                std::cout << "mod: " << rotNum << std::endl;
 
                 i = 100; // break out of loop
@@ -148,8 +148,23 @@ void MarkerLayout::poseEstimation(cv::Mat imgBin, int w, int h, cv::Mat cameraMa
 
 cv::Mat MarkerLayout::projectAxis(cv::Mat img, Barcode barcode)
 {
-    // get marker world transform
-    cv::Mat worldTransform = getWorldTransform();
+    // project axis
+    axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+    axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+    axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+    axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
+
+    cv::projectPoints(axis, rvec, tvec, barcode.cameraMatrix, barcode.distCoeffs, projectedAxis);
+
+    cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
+    cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
+    cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
+
+    return img;
+}
+
+cv::Mat MarkerLayout::projectTransformAxis(cv::Mat img, Barcode barcode, cv::Mat newWorldTransform)
+{
 
     // create input transform from rvec tvec
     cv::Mat rMat = cv::Mat(3,3,cv::DataType<double>::type);
@@ -161,7 +176,7 @@ cv::Mat MarkerLayout::projectAxis(cv::Mat img, Barcode barcode)
     markerTransform.at<double>(3,0) = 0;                    markerTransform.at<double>(3,1) = 0;                    markerTransform.at<double>(3,2) = 0;                    markerTransform.at<double>(3,3) = 1;
 
     // transform rvec and tvec to create new rvec tvec
-    cv::Mat markerWorld = markerTransform * worldTransform;
+    cv::Mat markerWorld = markerTransform * newWorldTransform;
 
     cv::Mat rMatNew = cv::Mat(3,3,cv::DataType<double>::type);;
     cv::Mat rvecNew = cv::Mat(3,1,cv::DataType<double>::type);;

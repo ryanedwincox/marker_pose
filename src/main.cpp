@@ -70,12 +70,6 @@ int main(int argc, char *argv[])
     cv::Mat rvec(3,1,cv::DataType<double>::type);
     cv::Mat tvec(3,1,cv::DataType<double>::type);
 
-    cv::Mat rvec1(3,1,cv::DataType<double>::type);
-    cv::Mat tvec1(3,1,cv::DataType<double>::type);
-
-    cv::Mat rvec2(3,1,cv::DataType<double>::type);
-    cv::Mat tvec2(3,1,cv::DataType<double>::type);
-
     // Camera matrices from camera calibration
     cv::Mat cameraMatrix(3,3,cv::DataType<double>::type);
     cameraMatrix.at<double>(0,0) = 644.50;
@@ -290,23 +284,7 @@ int main(int argc, char *argv[])
         tvec.at<double>(1) = 0;
         tvec.at<double>(2) = 0;
 
-        rvec1.at<double>(0) = 0;
-        rvec1.at<double>(1) = 0;
-        rvec1.at<double>(2) = 0;
-
-        tvec1.at<double>(0) = 0;
-        tvec1.at<double>(1) = 0;
-        tvec1.at<double>(2) = 0;
-
-        rvec2.at<double>(0) = 0;
-        rvec2.at<double>(1) = 0;
-        rvec2.at<double>(2) = 0;
-
-        tvec2.at<double>(0) = 0;
-        tvec2.at<double>(1) = 0;
-        tvec2.at<double>(2) = 0;
-
-        cv::Mat marker1WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);;
+        cv::Mat marker1WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);
         marker1WorldTransform.at<double>(0,0) = 1.0; marker1WorldTransform.at<double>(0,1) = 0.0; marker1WorldTransform.at<double>(0,2) = 0.0; marker1WorldTransform.at<double>(0,3) = 0.0;
         marker1WorldTransform.at<double>(1,0) = 0.0; marker1WorldTransform.at<double>(1,1) = 1.0; marker1WorldTransform.at<double>(1,2) = 0.0; marker1WorldTransform.at<double>(1,3) = 0.0;
         marker1WorldTransform.at<double>(2,0) = 0.0; marker1WorldTransform.at<double>(2,1) = 0.0; marker1WorldTransform.at<double>(2,2) = 1.0; marker1WorldTransform.at<double>(2,3) = 0.0;
@@ -321,7 +299,7 @@ int main(int argc, char *argv[])
         marker2WorldTransform.at<double>(2,0) = sin(theta); marker2WorldTransform.at<double>(2,1) = 0.0; marker2WorldTransform.at<double>(2,2) = cos(theta);  marker2WorldTransform.at<double>(2,3) = 0.3556;
         marker2WorldTransform.at<double>(3,0) = 0.0;        marker2WorldTransform.at<double>(3,1) = 0.0; marker2WorldTransform.at<double>(3,2) = 0.0;         marker2WorldTransform.at<double>(3,3) = 1.0;
 
-        marker2.setWorldTransform(marker1WorldTransform);
+        marker2.setWorldTransform(marker2WorldTransform);
 
         if (marker1.enoughMarkers)
         {
@@ -330,9 +308,11 @@ int main(int argc, char *argv[])
 
             if (!marker1.markerTransformationZero())
             {
-//                marker1.averageVec();
+//                marker1.averageVec(); // average later
 
                 img = marker1.projectAxis(img, barcode);
+
+//                img = marker1.projectTransformAxis(img, barcode, marker2WorldTransform);
 
                 img = marker1.projectBarcodeGrid(img, barcode);
             }
@@ -353,29 +333,118 @@ int main(int argc, char *argv[])
             }
         }
 
-        rvec = rvec1;
-        tvec = tvec1;
-
         // if rvec and tvec != 0
-        if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
-              tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
+        if (!marker1.markerTransformationZero())
         {
-            // Average transformation only when its a valid transformation
-            marker1.averageVec ();
+            cv::Mat totalImgCoord;
+            cv::Mat totalWorldCoord;
+            if (!marker2.markerTransformationZero())
+            {
+                std::cout << "found both markers" << std::endl;
+
+                // Define all image coordinates
+                totalImgCoord = cv::Mat(8,1,cv::DataType<cv::Point2f>::type); // 2 markers
+                cv::Mat imgCoord1 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                cv::Mat imgCoord2 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                imgCoord1 = marker1.getImageCoord(marker1.imgCoordOrientation);
+                imgCoord2 = marker2.getImageCoord(marker2.imgCoordOrientation);
+                totalImgCoord.at<cv::Point2f>(0) = imgCoord1.at<cv::Point2f>(0);
+                totalImgCoord.at<cv::Point2f>(1) = imgCoord1.at<cv::Point2f>(1);
+                totalImgCoord.at<cv::Point2f>(2) = imgCoord1.at<cv::Point2f>(2);
+                totalImgCoord.at<cv::Point2f>(3) = imgCoord1.at<cv::Point2f>(3);
+                totalImgCoord.at<cv::Point2f>(4) = imgCoord2.at<cv::Point2f>(0);
+                totalImgCoord.at<cv::Point2f>(5) = imgCoord2.at<cv::Point2f>(1);
+                totalImgCoord.at<cv::Point2f>(6) = imgCoord2.at<cv::Point2f>(2);
+                totalImgCoord.at<cv::Point2f>(7) = imgCoord2.at<cv::Point2f>(3);
+
+                // Define all world coordinates
+                totalWorldCoord = cv::Mat(8,1,cv::DataType<cv::Point3f>::type); // 2 markers
+                cv::Mat worldCoord1 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                cv::Mat worldCoord2 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                cv::Mat newWorldCoord2 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                worldCoord1 = marker1.getWorldCoord();
+                worldCoord2 = marker2.getWorldCoord();
+
+                // transform world coordinates for marker 2
+                for (int i = 0; i < 4; i++)
+                {
+                    cv::Mat worldPoint = cv::Mat(4,1,cv::DataType<double>::type);
+                    worldPoint.at<double>(0) = (double)worldCoord2.at<cv::Point3f>(i).x;
+                    worldPoint.at<double>(1) = (double)worldCoord2.at<cv::Point3f>(i).y;
+                    worldPoint.at<double>(2) = (double)worldCoord2.at<cv::Point3f>(i).z;
+                    worldPoint.at<double>(3) = 1;
+
+//                    std::cout << "WorldPoint: " << worldPoint << std::endl;
+//                    std::cout << "transform: " << marker2.getWorldTransform() << std::endl;
+
+                    worldPoint = marker2.getWorldTransform() * worldPoint;
+                    std::cout << "worldPoint: " << worldPoint << std::endl;
+
+                    newWorldCoord2.at<cv::Point3f>(i).x = (float)worldPoint.at<double>(0);
+                    newWorldCoord2.at<cv::Point3f>(i).y = (float)worldPoint.at<double>(1);
+                    newWorldCoord2.at<cv::Point3f>(i).z = (float)worldPoint.at<double>(2);
+                }
+
+                std::cout << "worldCoord2: " << newWorldCoord2 << std::endl;
+
+                totalWorldCoord.at<cv::Point3f>(0) = worldCoord1.at<cv::Point3f>(0);
+                totalWorldCoord.at<cv::Point3f>(1) = worldCoord1.at<cv::Point3f>(1);
+                totalWorldCoord.at<cv::Point3f>(2) = worldCoord1.at<cv::Point3f>(2);
+                totalWorldCoord.at<cv::Point3f>(3) = worldCoord1.at<cv::Point3f>(3);
+                totalWorldCoord.at<cv::Point3f>(4) = newWorldCoord2.at<cv::Point3f>(0);
+                totalWorldCoord.at<cv::Point3f>(5) = newWorldCoord2.at<cv::Point3f>(1);
+                totalWorldCoord.at<cv::Point3f>(6) = newWorldCoord2.at<cv::Point3f>(2);
+                totalWorldCoord.at<cv::Point3f>(7) = newWorldCoord2.at<cv::Point3f>(3);
+
+                // draw world coord for sanity check
+                cv::Mat temp = cv::Mat(8,1,cv::DataType<cv::Point2f>::type);
+                cv::projectPoints(totalWorldCoord, marker1.rvec, marker1.tvec, barcode.cameraMatrix, barcode. distCoeffs, temp);
+                for (int i = 0; i < 8; i++)
+                {
+                    cv::circle(img, temp.at<cv::Point2f>(i), 3, cv::Scalar(255,255,0), -1);
+                }
+            }
+            else
+            {
+                totalImgCoord = cv::Mat(4,1,cv::DataType<cv::Point2f>::type); // 1 marker
+                cv::Mat imgCoord1 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                imgCoord1 = marker1.getImageCoord(marker1.imgCoordOrientation);
+                totalImgCoord.at<cv::Point2f>(0) = imgCoord1.at<cv::Point2f>(0);
+                totalImgCoord.at<cv::Point2f>(1) = imgCoord1.at<cv::Point2f>(1);
+                totalImgCoord.at<cv::Point2f>(2) = imgCoord1.at<cv::Point2f>(2);
+                totalImgCoord.at<cv::Point2f>(3) = imgCoord1.at<cv::Point2f>(3);
+
+                totalWorldCoord = cv::Mat(4,1,cv::DataType<cv::Point3f>::type); // 1 marker
+                cv::Mat worldCoord1 = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+                worldCoord1 = marker1.getWorldCoord();
+                totalWorldCoord.at<cv::Point3f>(0) = worldCoord1.at<cv::Point3f>(0);
+                totalWorldCoord.at<cv::Point3f>(1) = worldCoord1.at<cv::Point3f>(1);
+                totalWorldCoord.at<cv::Point3f>(2) = worldCoord1.at<cv::Point3f>(2);
+                totalWorldCoord.at<cv::Point3f>(3) = worldCoord1.at<cv::Point3f>(3);
+            }
+
+            int flags = cv::ITERATIVE;
+            bool useExtrinsicGuess = false;
+            std::cout << totalWorldCoord << std::endl;
+//            rvec = marker1.rvec;
+//            tvec = marker1.tvec;
+            cv::solvePnP(totalWorldCoord, totalImgCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+
 
             // project axis
-//            img = barcode.projectAxis(img, rvec, tvec, marker1);
-//            img = barcode.projectAxis(img, rvec, tvec, marker2);
+            cv::Mat axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type); // 1 marker
+            std::vector<cv::Point2f> projectedAxis;
+            axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+            axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+            axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+            axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
 
-            // Project barcode layout
-//            img = barcode.projectBarcodeGrid(img, rvec, tvec);
+            cv::projectPoints(axis, rvec, tvec, barcode.cameraMatrix, barcode.distCoeffs, projectedAxis);
 
-//            img = barcode.projectSamplePoints(img, rvec, tvec);
+            cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
+            cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
+            cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
 
-//            // Get barcode value
-//            int foundMarker = barcode.getMarkerNumber(imgBin);
-
-//            std::cout << foundMarker << std::endl;
 
             // inverse pose estimation to get camera position
             cv::Mat rMat(3,3,cv::DataType<double>::type);
@@ -386,12 +455,10 @@ int main(int argc, char *argv[])
             cv::transpose(rMat, rMatTrans);
             tvecCam = -rMatTrans * tvec;
 
-            // publish tf if a pose estimation is possible
-            if (H.size() >= 4)
-            {
-                publishMarkerTF();
-                publishCameraTF(rMatTrans, tvecCam);
-            }
+            // publish tf
+            publishMarkerTF();
+            publishCameraTF(rMatTrans, tvecCam);
+
         }
 
         // Display images
@@ -400,7 +467,7 @@ int main(int argc, char *argv[])
         cv::imshow("Original Image", img);
 
         // keep window open until any key is pressed
-//        if(cv::waitKey(70) >= 0) break; // for recorded video
+//        if(cv::waitKey(150) >= 0) break; // for recorded video
         if(cv::waitKey(1) >= 0) break; // from USB cam
     }
 }

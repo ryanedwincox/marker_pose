@@ -27,11 +27,14 @@ public:
     bool markerTransformationZero();
     cv::Mat projectAxis(cv::Mat img, Barcode barcode);
     cv::Mat projectBarcodeGrid(cv::Mat img, Barcode barcode);
+    cv::Mat projectTransformAxis(cv::Mat img, Barcode barcode, cv::Mat newWorldTransform);
 
     cv::Mat rvec;
     cv::Mat tvec;
     bool enoughMarkers;
     int foundMarkers;
+    int imgCoordOrientation;
+
 
 private:
     // sorting methods
@@ -41,6 +44,8 @@ private:
     // Variables
     int averageingWindow;
     int numMarkers;
+    int rotNum;
+    int markerID;
     float targetSpacing;
     cv::Mat worldTransform;
     cv::Mat worldCoord;
