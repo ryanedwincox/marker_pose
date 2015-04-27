@@ -13,7 +13,7 @@
 
 #include "search.h"
 #include "holdpoint.h"
-#include "markerlayout.h"
+#include "marker.h"
 #include "barcode.h"
 #include "combinations.h"
 #include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
@@ -27,7 +27,7 @@
 std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches);
 cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
-void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, MarkerLayout marker, Barcode barcode, Combinations comb);
+void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
 void publishCameraTF(cv::Mat rMat, cv::Mat tvec);
 void publishMarkerTF();
 void comb(int N, int K);
@@ -101,8 +101,8 @@ int main(int argc, char *argv[])
     int w = img.cols;
     int h = img.rows;
 
-    MarkerLayout marker1;
-    MarkerLayout marker2;
+    Marker marker1;
+    Marker marker2;
 
     Barcode barcode;
     barcode.setCameraParmeters(cameraMatrix, distCoeffs, w, h);
@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
         if (marker1.enoughMarkers)
         {
             // estimate pose
-            marker1.poseEstimation(imgBin, w, h, cameraMatrix, distCoeffs, barcode);
+            marker1.poseEstimation(imgBin, w, h, barcode);
 
             if (!marker1.markerTransformationZero())
             {
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
         if (marker2.enoughMarkers)
         {
             // estimate pose
-            marker2.poseEstimation(imgBin, w, h, cameraMatrix, distCoeffs, barcode);
+            marker2.poseEstimation(imgBin, w, h, barcode);
 
             if (!marker2.markerTransformationZero())
             {
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
             cv::Mat totalWorldCoord;
             if (!marker2.markerTransformationZero())
             {
-                std::cout << "found both markers" << std::endl;
+//                std::cout << "found both markers" << std::endl;
 
                 // Define all image coordinates
                 totalImgCoord = cv::Mat(8,1,cv::DataType<cv::Point2f>::type); // 2 markers
@@ -381,14 +381,14 @@ int main(int argc, char *argv[])
 //                    std::cout << "transform: " << marker2.getWorldTransform() << std::endl;
 
                     worldPoint = marker2.getWorldTransform() * worldPoint;
-                    std::cout << "worldPoint: " << worldPoint << std::endl;
+//                    std::cout << "worldPoint: " << worldPoint << std::endl;
 
                     newWorldCoord2.at<cv::Point3f>(i).x = (float)worldPoint.at<double>(0);
                     newWorldCoord2.at<cv::Point3f>(i).y = (float)worldPoint.at<double>(1);
                     newWorldCoord2.at<cv::Point3f>(i).z = (float)worldPoint.at<double>(2);
                 }
 
-                std::cout << "worldCoord2: " << newWorldCoord2 << std::endl;
+//                std::cout << "worldCoord2: " << newWorldCoord2 << std::endl;
 
                 totalWorldCoord.at<cv::Point3f>(0) = worldCoord1.at<cv::Point3f>(0);
                 totalWorldCoord.at<cv::Point3f>(1) = worldCoord1.at<cv::Point3f>(1);
@@ -399,13 +399,13 @@ int main(int argc, char *argv[])
                 totalWorldCoord.at<cv::Point3f>(6) = newWorldCoord2.at<cv::Point3f>(2);
                 totalWorldCoord.at<cv::Point3f>(7) = newWorldCoord2.at<cv::Point3f>(3);
 
-                // draw world coord for sanity check
-                cv::Mat temp = cv::Mat(8,1,cv::DataType<cv::Point2f>::type);
-                cv::projectPoints(totalWorldCoord, marker1.rvec, marker1.tvec, barcode.cameraMatrix, barcode. distCoeffs, temp);
-                for (int i = 0; i < 8; i++)
-                {
-                    cv::circle(img, temp.at<cv::Point2f>(i), 3, cv::Scalar(255,255,0), -1);
-                }
+//                // draw world coord for sanity check
+//                cv::Mat temp = cv::Mat(8,1,cv::DataType<cv::Point2f>::type);
+//                cv::projectPoints(totalWorldCoord, marker1.rvec, marker1.tvec, barcode.cameraMatrix, barcode. distCoeffs, temp);
+//                for (int i = 0; i < 8; i++)
+//                {
+//                    cv::circle(img, temp.at<cv::Point2f>(i), 3, cv::Scalar(255,255,0), -1);
+//                }
             }
             else
             {
@@ -500,86 +500,7 @@ void publishMarkerTF()
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker"));
 }
 
-
-
-//// POSE ESTIMATION
-//void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, MarkerLayout marker, Barcode barcode, Combinations comb)
-//{
-
-////    std::cout << "pose estimation" << std::endl;
-
-//    int flags = cv::ITERATIVE;
-//    bool useExtrinsicGuess = false;
-//    int numOrientations = 2;
-
-//    int foundMarker = -1;
-//    int markerID = -1;
-
-////  **** combination test code
-////    int num = 5;
-////    int arr [num];
-////    for (int i = 0; i < num; i++)
-////    {
-////        arr[i] = i;
-////    }
-////    comb.printCombination(arr, num);
-
-////    for (int i=0; i<comb.numCombinations; i++)
-////    {
-////        for (int j=0; j<comb.r; j++)
-////        {
-////            printf("%d ",comb.combinations[i][j]);
-////        }
-////        printf("\n");
-////    }
-//    // ****
-
-//    // Iterate through possible orientations for 4 markers
-//    for (int i = 0; i < numOrientations; i++)
-//    {
-//        cv::solvePnP(marker.getWorldCoord(), marker.getImageCoord(i), cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
-
-//        // if rvec and tvec != 0
-//        if (!(rvec.at<double>(0) == 0 && rvec.at<double>(1) == 0 && rvec.at<double>(2) == 0 &&
-//            tvec.at<double>(0) == 0 && tvec.at<double>(1) == 0 && tvec.at<double>(2) == 0))
-//        {
-//            barcode.projectSamplePoints(rvec, tvec);
-
-//            // Get barcode value
-//            foundMarker = barcode.getMarkerNumber(imgBin);
-//            markerID = foundMarker/4;
-//            int rotNum = foundMarker%4;
-
-//            barcode.rotateOrigin(rotNum, &rvec, &tvec);
-
-//            // if marker is found and not looking from behind
-//            if (foundMarker != -1 && barcode.zDirection(rvec))
-//            {
-//                std::cout << "found marker number: " << markerID << std::endl;
-////                std::cout << "mod: " << rotNum << std::endl;
-
-//                i = 100; // break out of loop
-//            }
-//        }
-//    }
-//    if (foundMarker == -1)
-//    {
-//        std::cout << "no marker found" << std::endl;
-
-//        // reset rvec and tvec
-//        rvec.at<double>(0) = 0;
-//        rvec.at<double>(1) = 0;
-//        rvec.at<double>(2) = 0;
-
-//        tvec.at<double>(0) = 0;
-//        tvec.at<double>(1) = 0;
-//        tvec.at<double>(2) = 0;
-//    }
-
-//}
-
-
-
+// TODO move to search
 std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz)
 {
     // Read all matches from OpenCL kernel
@@ -609,6 +530,7 @@ std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int mat
     return matches;
 }
 
+// TODO move to search
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
 {
     // Creates a list to store all averaged matches
@@ -666,19 +588,20 @@ cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color)
     return img;
 }
 
-void comb(int N, int K)
-{
-    std::string bitmask(K, 1); // K leading 1's
-    bitmask.resize(N, 0); // N-K trailing 0's
+// Not Used
+//void comb(int N, int K)
+//{
+//    std::string bitmask(K, 1); // K leading 1's
+//    bitmask.resize(N, 0); // N-K trailing 0's
 
-    // print integers and permute bitmask
-    do {
-        for (int i = 0; i < N; ++i) // [0..N-1] integers
-        {
-            if (bitmask[i]) std::cout << " " << i;
-        }
-        std::cout << std::endl;
-    } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
-}
+//    // print integers and permute bitmask
+//    do {
+//        for (int i = 0; i < N; ++i) // [0..N-1] integers
+//        {
+//            if (bitmask[i]) std::cout << " " << i;
+//        }
+//        std::cout << std::endl;
+//    } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
+//}
 
 

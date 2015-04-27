@@ -36,10 +36,12 @@ include_directories("/opt/AMDAPP/include")
 include_directories("/usr/include/")
 
 set(SOURCE_FILES
-    src/markerlayout.cpp
-    src/markerlayout.h
     src/barcode.cpp
     src/barcode.h
+    src/marker.cpp
+    src/marker.h
+    src/markermanager.cpp
+    src/markermanager.h
     src/holdpoint.cpp
     src/holdpoint.h
     src/search.cpp
@@ -52,8 +54,6 @@ set(SOURCE_FILES
     cl/findSSL.cl
     manifest.xml
 )
-
-
 
 rosbuild_add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
