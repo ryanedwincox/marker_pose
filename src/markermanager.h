@@ -17,20 +17,21 @@ public:
     MarkerManager(int numMarkers);
     void createMarkers();
     vector<Marker> getMarkers();
-    void clusterTargetInputs();
-    void findTargetCluster();
+    cv::Mat clusterTargetInputs(vector<HoldPoint> H, cv::Mat img);
+    vector<HoldPoint> findTargetCluster();
     cv::Mat estimateWorldPose(vector<Marker>);
     void projectAxis();
     void publishTF();
+    cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 
 private:
     MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
     cv::Mat eigenToCvMat(Matrix4d input, int rows, int cols);
 
     int numMarkers;
+    vector<HoldPoint> H;
     vector<Marker> markers;
-    HoldPoint holdPointsArray [];
-    int dist [];
+    vector<int> dist;
 };
 
 #endif // MARKERMANAGER_H
