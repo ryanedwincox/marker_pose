@@ -16,6 +16,7 @@
 #include "marker.h"
 #include "barcode.h"
 #include "combinations.h"
+#include "markermanager.h"
 #include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
 
 // ROS includes
@@ -103,6 +104,8 @@ int main(int argc, char *argv[])
 
     Marker marker1;
     Marker marker2;
+    int numMarkers = 2;
+    MarkerManager markerManager(numMarkers);
 
     Barcode barcode;
     barcode.setCameraParmeters(cameraMatrix, distCoeffs, w, h);
@@ -173,110 +176,114 @@ int main(int argc, char *argv[])
 
         H = hold.holdPoints(H, avgMatches);
 
-        // put all holdpoints into an array
-        int numMatches = H.size();
-//        std::cout << "numMatches: " << numMatches << std::endl;
-        HoldPoint holdPointsArray [numMatches];
-        int k = 0;
-//        std::cout << "targets" << std::endl;
-        for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
-        {
-            holdPointsArray[k] = *it;
-//            std::cout << holdPointsArray[k].heldMatch << std::endl;
-            k++;
-        }
+//        // put all holdpoints into an array
+//        int numMatches = H.size();
+////        std::cout << "numMatches: " << numMatches << std::endl;
+//        HoldPoint holdPointsArray [numMatches];
+//        int k = 0;
+////        std::cout << "targets" << std::endl;
+//        for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
+//        {
+//            holdPointsArray[k] = *it;
+////            std::cout << holdPointsArray[k].heldMatch << std::endl;
+//            k++;
+//        }
 
-        // find the distances from the first target to every other target
-        int dist [numMatches]; // stores the distance from the first target to every other target
-        cv::Point start = holdPointsArray[0].heldMatch;
-//        std::cout << "distances" << std::endl;
-        for (int i = 0; i < numMatches; i++)
-        {
-            cv::Point end =  holdPointsArray[i].heldMatch;
-            dist[i] = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2));
-//            std::cout << dist[i] << std::endl;
-        }
+//        // find the distances from the first target to every other target
+//        int dist [numMatches]; // stores the distance from the first target to every other target
+//        cv::Point start = holdPointsArray[0].heldMatch;
+////        std::cout << "distances" << std::endl;
+//        for (int i = 0; i < numMatches; i++)
+//        {
+//            cv::Point end =  holdPointsArray[i].heldMatch;
+//            dist[i] = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2));
+////            std::cout << dist[i] << std::endl;
+//        }
 
-        // loop through and find the shortest distance 3 times
-        std::vector<HoldPoint> H1;
-        H1.push_back(holdPointsArray[0]);
-//        std::cout << "shortest" << std::endl;
-        for (int i = 0; i < 3; i++)
-        {
-            int min = INT_MAX;
-            int indexOfMin;
-            for (int j = 1; j < numMatches; j++) // exclude the distance from the first element to the first element because it is zero
-            {
-                if (dist[j] < min && dist[j] > 20) // > 20 to avoid duplicate points
-                {
-//                    std::cout << dist[j] <<std::endl;
-                    min = dist[j];
-                    indexOfMin = j;
-                }
-            }
-//            std::cout << dist[indexOfMin] << std::endl;
-            H1.push_back(holdPointsArray[indexOfMin]);
-            dist[indexOfMin] = INT_MAX; // Make sure the same min value is not used again
-        }
-        dist[0] = INT_MAX;
+//        // loop through and find the shortest distance 3 times
+//        std::vector<HoldPoint> H1;
+//        H1.push_back(holdPointsArray[0]);
+////        std::cout << "shortest" << std::endl;
+//        for (int i = 0; i < 3; i++)
+//        {
+//            int min = INT_MAX;
+//            int indexOfMin;
+//            for (int j = 1; j < numMatches; j++) // exclude the distance from the first element to the first element because it is zero
+//            {
+//                if (dist[j] < min && dist[j] > 20) // > 20 to avoid duplicate points
+//                {
+////                    std::cout << dist[j] <<std::endl;
+//                    min = dist[j];
+//                    indexOfMin = j;
+//                }
+//            }
+////            std::cout << dist[indexOfMin] << std::endl;
+//            H1.push_back(holdPointsArray[indexOfMin]);
+//            dist[indexOfMin] = INT_MAX; // Make sure the same min value is not used again
+//        }
+//        dist[0] = INT_MAX;
 
-        // find next target
-        std::vector<HoldPoint> H2;
-        if (numMatches >= 8)
-        {
-            // create new array with all elements with distance not set to INT_MAX
-            HoldPoint holdPointsArray2 [numMatches-4];
-            int dist2 [numMatches-4];
-            int g = 0;
-//            std::cout << "reused targets " << std::endl;
-            for (int i = 0; i < numMatches; i++)
-            {
-                if (dist[i] < INT_MAX)
-                {
-                    holdPointsArray2[g] = holdPointsArray[i];
-                    dist2[g] = dist[i];
-//                    std::cout << holdPointsArray2[g].heldMatch << std::endl;
-                    g++;
-                }
-            }
+//        // find next target
+//        std::vector<HoldPoint> H2;
+//        if (numMatches >= 8)
+//        {
+//            // create new array with all elements with distance not set to INT_MAX
+//            HoldPoint holdPointsArray2 [numMatches-4];
+//            int dist2 [numMatches-4];
+//            int g = 0;
+////            std::cout << "reused targets " << std::endl;
+//            for (int i = 0; i < numMatches; i++)
+//            {
+//                if (dist[i] < INT_MAX)
+//                {
+//                    holdPointsArray2[g] = holdPointsArray[i];
+//                    dist2[g] = dist[i];
+////                    std::cout << holdPointsArray2[g].heldMatch << std::endl;
+//                    g++;
+//                }
+//            }
 
-            // loop through and find the shortest distance 3 times
+//            // loop through and find the shortest distance 3 times
 
-            H2.push_back(holdPointsArray2[0]);
-    //        std::cout << "shortest" << std::endl;
-            for (int i = 0; i < 3; i++)
-            {
-                int min = INT_MAX;
-                int indexOfMin;
-                for (int j = 1; j < numMatches; j++) // exclude the distance from the first element to the first element because it is zero
-                {
-                    if (dist2[j] < min && dist2[j] > 20) // > 20 to avoid duplicate points
-                    {
-    //                    std::cout << dist[j] <<std::endl;
-                        min = dist2[j];
-                        indexOfMin = j;
-                    }
-                }
-    //            std::cout << dist[indexOfMin] << std::endl;
-                H2.push_back(holdPointsArray2[indexOfMin]);
-                dist2[indexOfMin] = INT_MAX; // Make sure the same min value is not used again
-            }
-            dist2[0] = INT_MAX;
-        }
-        // Draw targets over averaged matches
-        img = drawTargets(img, H1, cv::Scalar(0,0,255));
-        img = drawTargets(img, H2, cv::Scalar(0,255,0));
+//            H2.push_back(holdPointsArray2[0]);
+//    //        std::cout << "shortest" << std::endl;
+//            for (int i = 0; i < 3; i++)
+//            {
+//                int min = INT_MAX;
+//                int indexOfMin;
+//                for (int j = 1; j < numMatches; j++) // exclude the distance from the first element to the first element because it is zero
+//                {
+//                    if (dist2[j] < min && dist2[j] > 20) // > 20 to avoid duplicate points
+//                    {
+//    //                    std::cout << dist[j] <<std::endl;
+//                        min = dist2[j];
+//                        indexOfMin = j;
+//                    }
+//                }
+//    //            std::cout << dist[indexOfMin] << std::endl;
+//                H2.push_back(holdPointsArray2[indexOfMin]);
+//                dist2[indexOfMin] = INT_MAX; // Make sure the same min value is not used again
+//            }
+//            dist2[0] = INT_MAX;
+//        }
+//        // Draw targets over averaged matches
+//        img = drawTargets(img, H1, cv::Scalar(0,0,255));
+//        img = drawTargets(img, H2, cv::Scalar(0,255,0));
 
-        std::vector<HoldPoint> H1sorted = marker1.sortPointsVertically(H1);
-        std::vector<HoldPoint> H2sorted = marker2.sortPointsVertically(H2);
+//        std::vector<HoldPoint> H1sorted = marker1.sortPointsVertically(H1);
+//        std::vector<HoldPoint> H2sorted = marker2.sortPointsVertically(H2);
 
-        marker1.foundMarkers = H1.size();
-        marker1.setImageCoord(H1sorted);
-        marker2.foundMarkers = H2.size();
-        marker2.setImageCoord(H2sorted);
+//        // ******** not sure where this belongs
+//        marker1.foundMarkers = H1.size();
+//        marker1.setImageCoord(H1sorted);
+//        marker2.foundMarkers = H2.size();
+//        marker2.setImageCoord(H2sorted);
 
-        marker1.setWorldCoord();
-        marker2.setWorldCoord();
+//        marker1.setWorldCoord();
+//        marker2.setWorldCoord();
+       // ********
+
+        markerManager.createMarkers();
 
         // reset rvec and tvec
         rvec.at<double>(0) = 0;
@@ -287,22 +294,22 @@ int main(int argc, char *argv[])
         tvec.at<double>(1) = 0;
         tvec.at<double>(2) = 0;
 
-        cv::Mat marker1WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);
-        marker1WorldTransform.at<double>(0,0) = 1.0; marker1WorldTransform.at<double>(0,1) = 0.0; marker1WorldTransform.at<double>(0,2) = 0.0; marker1WorldTransform.at<double>(0,3) = 0.0;
-        marker1WorldTransform.at<double>(1,0) = 0.0; marker1WorldTransform.at<double>(1,1) = 1.0; marker1WorldTransform.at<double>(1,2) = 0.0; marker1WorldTransform.at<double>(1,3) = 0.0;
-        marker1WorldTransform.at<double>(2,0) = 0.0; marker1WorldTransform.at<double>(2,1) = 0.0; marker1WorldTransform.at<double>(2,2) = 1.0; marker1WorldTransform.at<double>(2,3) = 0.0;
-        marker1WorldTransform.at<double>(3,0) = 0.0; marker1WorldTransform.at<double>(3,1) = 0.0; marker1WorldTransform.at<double>(3,2) = 0.0; marker1WorldTransform.at<double>(3,3) = 1.0;
+//        cv::Mat marker1WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);
+//        marker1WorldTransform.at<double>(0,0) = 1.0; marker1WorldTransform.at<double>(0,1) = 0.0; marker1WorldTransform.at<double>(0,2) = 0.0; marker1WorldTransform.at<double>(0,3) = 0.0;
+//        marker1WorldTransform.at<double>(1,0) = 0.0; marker1WorldTransform.at<double>(1,1) = 1.0; marker1WorldTransform.at<double>(1,2) = 0.0; marker1WorldTransform.at<double>(1,3) = 0.0;
+//        marker1WorldTransform.at<double>(2,0) = 0.0; marker1WorldTransform.at<double>(2,1) = 0.0; marker1WorldTransform.at<double>(2,2) = 1.0; marker1WorldTransform.at<double>(2,3) = 0.0;
+//        marker1WorldTransform.at<double>(3,0) = 0.0; marker1WorldTransform.at<double>(3,1) = 0.0; marker1WorldTransform.at<double>(3,2) = 0.0; marker1WorldTransform.at<double>(3,3) = 1.0;
 
-        marker1.setWorldTransform(marker1WorldTransform);
+//        marker1.setWorldTransform(marker1WorldTransform);
 
-        cv::Mat marker2WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);
-        double theta = PI/2;
-        marker2WorldTransform.at<double>(0,0) = cos(theta); marker2WorldTransform.at<double>(0,1) = 0.0; marker2WorldTransform.at<double>(0,2) = -sin(theta); marker2WorldTransform.at<double>(0,3) = 0.10795;
-        marker2WorldTransform.at<double>(1,0) = 0.0;        marker2WorldTransform.at<double>(1,1) = 1.0; marker2WorldTransform.at<double>(1,2) = 0.0;         marker2WorldTransform.at<double>(1,3) = 0.0;
-        marker2WorldTransform.at<double>(2,0) = sin(theta); marker2WorldTransform.at<double>(2,1) = 0.0; marker2WorldTransform.at<double>(2,2) = cos(theta);  marker2WorldTransform.at<double>(2,3) = 0.3556;
-        marker2WorldTransform.at<double>(3,0) = 0.0;        marker2WorldTransform.at<double>(3,1) = 0.0; marker2WorldTransform.at<double>(3,2) = 0.0;         marker2WorldTransform.at<double>(3,3) = 1.0;
+//        cv::Mat marker2WorldTransform = cv::Mat(4,4,cv::DataType<double>::type);
+//        double theta = PI/2;
+//        marker2WorldTransform.at<double>(0,0) = cos(theta); marker2WorldTransform.at<double>(0,1) = 0.0; marker2WorldTransform.at<double>(0,2) = -sin(theta); marker2WorldTransform.at<double>(0,3) = 0.10795;
+//        marker2WorldTransform.at<double>(1,0) = 0.0;        marker2WorldTransform.at<double>(1,1) = 1.0; marker2WorldTransform.at<double>(1,2) = 0.0;         marker2WorldTransform.at<double>(1,3) = 0.0;
+//        marker2WorldTransform.at<double>(2,0) = sin(theta); marker2WorldTransform.at<double>(2,1) = 0.0; marker2WorldTransform.at<double>(2,2) = cos(theta);  marker2WorldTransform.at<double>(2,3) = 0.3556;
+//        marker2WorldTransform.at<double>(3,0) = 0.0;        marker2WorldTransform.at<double>(3,1) = 0.0; marker2WorldTransform.at<double>(3,2) = 0.0;         marker2WorldTransform.at<double>(3,3) = 1.0;
 
-        marker2.setWorldTransform(marker2WorldTransform);
+//        marker2.setWorldTransform(marker2WorldTransform);
 
         if (marker1.enoughMarkers)
         {
