@@ -24,6 +24,8 @@ public:
     int getMarkerNumber(cv::Mat imgBin);
     int getSectionValue(cv::Mat img, cv::Point2f samplePoint, int w, int h);
     void rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec);
+    int getImageWidth();
+    int getImageHeight();
 
     cv::Mat cameraMatrix;
     cv::Mat distCoeffs;
@@ -34,12 +36,7 @@ private:
     int h;
     int markerNumber;
 
-
-
     cv::Mat samplePoints;
-
-
-
     std::vector<cv::Point2f> projectedSamplePoints;
 
     int barcodes [NUM_BARCODES][9];

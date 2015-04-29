@@ -172,3 +172,13 @@ int Barcode::getSectionValue(cv::Mat imgBin, cv::Point2f samplePoint, int w, int
         return -1;
     }
 }
+
+int Barcode::getImageWidth()
+{
+    return w;
+}
+
+int Barcode::getImageHeight()
+{
+    return h;
+}

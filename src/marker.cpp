@@ -58,7 +58,7 @@ void Marker::rotateWorldCoord(int rot)
     //                    std::cout << "transform: " << marker2.getWorldTransform() << std::endl;
 
             worldPoint = affineRotation * worldPoint;
-            std::cout << "worldPoint: " << worldPoint << std::endl;
+//            std::cout << "worldPoint: " << worldPoint << std::endl;
 
             worldCoord.at<cv::Point3f>(i).x = (float)worldPoint.at<double>(0);
             worldCoord.at<cv::Point3f>(i).y = (float)worldPoint.at<double>(1);

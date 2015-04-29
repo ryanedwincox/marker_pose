@@ -1,8 +1,9 @@
 #include "markermanager.h"
 
-MarkerManager::MarkerManager(int numMarkers)
+MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
 {
     this->numMarkers = numMarkers;
+    this->barcode = barcode;
 
     markers = vector<Marker> (numMarkers);
 
@@ -39,7 +40,7 @@ vector<Marker> MarkerManager::getMarkers()
     return markers;
 }
 
-cv::Mat MarkerManager::clusterTargetInputs(vector<HoldPoint> H, cv::Mat img)
+void MarkerManager::clusterTargetInputs(vector<HoldPoint> H)
 {
     this->H = H;
     int numMatches = H.size();
@@ -54,7 +55,7 @@ cv::Mat MarkerManager::clusterTargetInputs(vector<HoldPoint> H, cv::Mat img)
             vector<HoldPoint> cluster;
             cluster = findTargetCluster();
 
-            img = drawTargets(img, cluster, cv::Scalar(255,0+255*i,0));  // temporary ****************
+            drawTargets(cluster, cv::Scalar(255,0+255*i,0));  // temporary ****************
             std::vector<HoldPoint> clusterSorted = markers.at(i).sortPointsVertically(cluster);
 
             // TODO set to the correct markers position based on the marker number
@@ -63,7 +64,6 @@ cv::Mat MarkerManager::clusterTargetInputs(vector<HoldPoint> H, cv::Mat img)
             markers.at(i).setWorldCoord();
         }
     }
-    return img;
 }
 
 vector<HoldPoint> MarkerManager::findTargetCluster()
@@ -78,9 +78,6 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
         cv::Point end =  H.at(i).heldMatch;
         dist.at(i) = sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2));
     }
-
-    cout << "H size: " << H.size() << endl;
-    cout << "dist size: " << dist.size() << endl;
 
     // loop through and find the shortest distance 3 times
     std::vector<HoldPoint> newCluster;
@@ -98,7 +95,6 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
                 indexOfMin = j;
             }
         }
-        cout << "index of min: " << indexOfMin << endl;
         if (indexOfMin >= 0)
         {
             newCluster.push_back(H.at(indexOfMin));
@@ -121,24 +117,27 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
     return newCluster;
 }
 
-cv::Mat MarkerManager::estimateWorldPose(vector<Marker>)
+void MarkerManager::estimateWorldPose()
 {
-//    if (marker1.enoughMarkers)
-//    {
-//        // estimate pose
-//        marker1.poseEstimation(imgBin, w, h, barcode);
+    for (int i = 0; i < numMarkers; i++)
+    {
+        if (markers[i].enoughMarkers)
+        {
+            // estimate pose
+            markers[i].poseEstimation(imgBin, barcode.getImageWidth(), barcode.getImageHeight(), barcode);
 
-//        if (!marker1.markerTransformationZero())
-//        {
-////                marker1.averageVec(); // average later
+            if (!markers[i].markerTransformationZero())
+            {
+    //                marker1.averageVec(); // average later
 
-//            img = marker1.projectAxis(img, barcode);
+                img = markers[i].projectAxis(img, barcode);
 
-////                img = marker1.projectTransformAxis(img, barcode, marker2WorldTransform);
+    //                img = marker1.projectTransformAxis(img, barcode, marker2WorldTransform);
 
-//            img = marker1.projectBarcodeGrid(img, barcode);
-//        }
-//    }
+                img = markers[i].projectBarcodeGrid(img, barcode);
+            }
+        }
+    }
 
 //    // if rvec and tvec != 0
 //    if (!marker1.markerTransformationZero())
@@ -253,7 +252,18 @@ cv::Mat MarkerManager::estimateWorldPose(vector<Marker>)
 //        cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
 }
 
-cv::Mat MarkerManager::drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color)
+void MarkerManager::setImage(cv::Mat img, cv::Mat imgBin)
+{
+    this->img = img;
+    this->imgBin = imgBin;
+}
+
+cv::Mat MarkerManager::getImage()
+{
+    return img;
+}
+
+void MarkerManager::drawTargets(std::vector<HoldPoint> H, cv::Scalar color)
 {
     // Draw red taget over averaged matches
     for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
@@ -264,7 +274,6 @@ cv::Mat MarkerManager::drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Sc
         cv::line(img, (cv::Point){center.x-l,center.y}, (cv::Point){center.x+l,center.y}, color, 2);
         cv::line(img, (cv::Point){center.x,center.y-l}, (cv::Point){center.x,center.y+l}, color, 2);
     }
-    return img;
 }
 
 MatrixXd MarkerManager::cvMatToEigen(cv::Mat input, int rows, int cols)
