@@ -50,18 +50,19 @@ void MarkerManager::clusterTargetInputs(vector<HoldPoint> H)
     {
         // find all clusters of target
         for (int i = 0; i < numMatches/4; i++)
-//        for (int i = 0; i < 1; i++)
         {
-            vector<HoldPoint> cluster;
-            cluster = findTargetCluster();
+            if (i < numMarkers)
+            {
+                vector<HoldPoint> cluster;
+                cluster = findTargetCluster();
 
-            drawTargets(cluster, cv::Scalar(255,0+255*i,0));  // temporary ****************
-            std::vector<HoldPoint> clusterSorted = markers.at(i).sortPointsVertically(cluster);
+                drawTargets(cluster, cv::Scalar(255,0+(255/(numMatches/4))*i,0));  // temporary ****************
+                std::vector<HoldPoint> clusterSorted = markers.at(i).sortPointsVertically(cluster);
 
-            // TODO set to the correct markers position based on the marker number
-            markers.at(i).foundMarkers = clusterSorted.size();
-            markers.at(i).setImageCoord(clusterSorted);
-            markers.at(i).setWorldCoord();
+                markers.at(i).foundMarkers = clusterSorted.size();
+                markers.at(i).setImageCoord(clusterSorted);
+                markers.at(i).setWorldCoord();
+            }
         }
     }
 }
@@ -82,6 +83,7 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
     // loop through and find the shortest distance 3 times
     std::vector<HoldPoint> newCluster;
     newCluster.push_back(H.at(0));
+
     dist[0] = INT_MAX;
     for (int i = 0; i < 3; i++)
     {
@@ -113,7 +115,6 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
             numMatches--;
         }
     }
-
     return newCluster;
 }
 
@@ -138,6 +139,36 @@ void MarkerManager::estimateWorldPose()
             }
         }
     }
+
+//    int foundMarkers = markers.size();
+//    cv::Mat totalImgCoord = cv::Mat(4*foundMarkers,1,cv::DataType<cv::Point2f>::type);
+//    cv::Mat totalWorldCoord = cv::Mat(4*foundMarkers,1,cv::DataType<cv::Point2f>::type);
+
+////    for (int i = 0; i < numMarkers; i++)
+////    {
+////        // if valid match found add coordinates to totalImgCoord and totalWorldCoord
+////        if (!markers[i].markerTransformationZero())
+////        {
+////            cv::Mat newImageCoord = cv::Mat(4,1,cv::DataType<cv::Point2f>::type);
+////            cv::Mat newWorldCoord = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
+
+////            newImageCoord = markers[i].getImageCoord(markers[i].imgCoordOrientation);
+////            newWorldCoord = markers[i].getWorldCoord();
+
+////            totalImgCoord.at<cv::Point2f>(4*i+0) = newImageCoord.at<cv::Point2f>(0);
+////            totalImgCoord.at<cv::Point2f>(4*i+1) = newImageCoord.at<cv::Point2f>(1);
+////            totalImgCoord.at<cv::Point2f>(4*i+2) = newImageCoord.at<cv::Point2f>(2);
+////            totalImgCoord.at<cv::Point2f>(4*i+3) = newImageCoord.at<cv::Point2f>(3);
+
+////            totalWorldCoord.at<cv::Point3f>(4*i+0) = newWorldCoord.at<cv::Point3f>(0);
+////            totalWorldCoord.at<cv::Point3f>(4*i+1) = newWorldCoord.at<cv::Point3f>(1);
+////            totalWorldCoord.at<cv::Point3f>(4*i+2) = newWorldCoord.at<cv::Point3f>(2);
+////            totalWorldCoord.at<cv::Point3f>(4*i+3) = newWorldCoord.at<cv::Point3f>(3);
+////        }
+////    }
+
+//    cout << "image coord: " << totalImgCoord << endl;
+//    cout << "world coord: " << totalWorldCoord << endl;
 
 //    // if rvec and tvec != 0
 //    if (!marker1.markerTransformationZero())

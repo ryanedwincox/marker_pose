@@ -2,10 +2,10 @@
 
 Marker::Marker()
 {
-    numMarkers = 4;
+    numMarkers = 4; // targets per marker
     targetSpacing = 0.105; // in meters
 
-    // Define rvec tvec
+    // Initialize rvec tvec
     rvec = cv::Mat(3,1,cv::DataType<double>::type);
     tvec = cv::Mat(3,1,cv::DataType<double>::type);
 
@@ -54,9 +54,6 @@ void Marker::rotateWorldCoord(int rot)
             affineRotation.at<double>(1,0) = -sin(theta); affineRotation.at<double>(1,1) = cos(theta); affineRotation.at<double>(1,2) = 0;
             affineRotation.at<double>(2,0) = 0;           affineRotation.at<double>(2,1) = 0;          affineRotation.at<double>(2,2) = 1;
 
-    //                    std::cout << "WorldPoint: " << worldPoint << std::endl;
-    //                    std::cout << "transform: " << marker2.getWorldTransform() << std::endl;
-
             worldPoint = affineRotation * worldPoint;
 //            std::cout << "worldPoint: " << worldPoint << std::endl;
 
@@ -65,15 +62,6 @@ void Marker::rotateWorldCoord(int rot)
             worldCoord.at<cv::Point3f>(i).z = (float)worldPoint.at<double>(2);
         }
     }
-
-//    for (int i = 0; i < rot; i++)
-//    {
-//        cv::Point3f temp = worldCoord.at<cv::Point3f>(0);
-//        worldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(1);
-//        worldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(2);
-//        worldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(3);
-//        worldCoord.at<cv::Point3f>(3) = temp;
-//    }
 }
 
 // takes a vertically sorted vector of HoldPoints and puts them in imageCoordVec in every possible order
@@ -84,7 +72,7 @@ void Marker::setImageCoord(std::vector<HoldPoint> H)
     {
         enoughMarkers = true;
 
-        // fill in all imageCoordVec permutations.  There should be 8 total
+        // There are two possible orders for the SSLs sorted vertically to make a square
         // TODO there could actually be more if you're looking in from the side closely
         imageCoord0.at<cv::Point2f>(0) = H.at(0).heldMatch;
         imageCoord0.at<cv::Point2f>(1) = H.at(1).heldMatch;
@@ -112,8 +100,23 @@ cv::Mat Marker::getWorldTransform()
     return worldTransform;
 }
 
+// returns world coordinates transformed by the world transform
 cv::Mat Marker::getWorldCoord()
 {
+//    for (int i = 0; i < 4; i++)
+//    {
+//        cv::Mat temp = cv::Mat(4,1,cv::DataType<double>::type);
+//        temp.at<double>(0) = (double)worldCoord.at<cv::Point3f>(i).x;
+//        temp.at<double>(1) = (double)worldCoord.at<cv::Point3f>(i).y;
+//        temp.at<double>(2) = (double)worldCoord.at<cv::Point3f>(i).z;
+//        temp.at<double>(3) = 1;
+
+//        temp = worldTransform * temp;
+
+//        worldCoord.at<cv::Point3f>(i).x = (float)temp.at<double>(0);
+//        worldCoord.at<cv::Point3f>(i).y = (float)temp.at<double>(1);
+//        worldCoord.at<cv::Point3f>(i).z = (float)temp.at<double>(2);
+//    }
     return worldCoord;
 }
 
