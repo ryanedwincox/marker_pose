@@ -19,17 +19,16 @@ public:
     vector<Marker> getMarkers();
     void clusterTargetInputs(vector<HoldPoint> H);
     vector<HoldPoint> findTargetCluster();
-    void estimateWorldPose();
+    Matrix4d estimateWorldPose();
     void projectAxis();
     void publishTF();
     void drawTargets(std::vector<HoldPoint> H, cv::Scalar color);
     void setImage(cv::Mat img, cv::Mat imgBin);
     cv::Mat getImage();
+    MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
+    cv::Mat eigenToCvMat(MatrixXd input, int rows, int cols);
 
 private:
-    MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
-    cv::Mat eigenToCvMat(Matrix4d input, int rows, int cols);
-
     cv::Mat rvec;
     cv::Mat tvec;
     cv::Mat img;

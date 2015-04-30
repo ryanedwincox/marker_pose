@@ -131,7 +131,7 @@ vector<HoldPoint> MarkerManager::findTargetCluster()
     return newCluster;
 }
 
-void MarkerManager::estimateWorldPose()
+Matrix4d MarkerManager::estimateWorldPose()
 {
     for (int i = 0; i < numMarkers; i++)
     {
@@ -206,8 +206,8 @@ void MarkerManager::estimateWorldPose()
         }
     }
 
-    cout << "total image coord: " << totalImageCoord << endl;
-    cout << "total world coord: " << totalWorldCoord << endl;
+//    cout << "total image coord: " << totalImageCoord << endl;
+//    cout << "total world coord: " << totalWorldCoord << endl;
 
 //    // draw world coord for sanity check
 //    cv::Mat temp = cv::Mat(8,1,cv::DataType<cv::Point2f>::type);
@@ -238,6 +238,24 @@ void MarkerManager::estimateWorldPose()
         cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
         cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
     }
+
+    // convert tvec to Eigen
+    MatrixXd tvecE(3,1);
+    tvecE = cvMatToEigen(tvec,3,1);
+
+    // convert rvec to rMat then to Eigen
+    cv::Mat rMat(3,3,cv::DataType<double>::type);
+    cv::Rodrigues(rvec, rMat);
+    MatrixXd rMatE(3,3);
+    rMatE = cvMatToEigen(rMat,3,3);
+
+    // Combine Eigen matricies of rvec and tvec into T
+    Matrix4d T;
+    T.topLeftCorner(3,3) = rMatE;
+    T.topRightCorner(3,1) = tvecE;
+    T.bottomLeftCorner(1,4) << 0,0,0,1;
+
+    return T;
 }
 
 void MarkerManager::setImage(cv::Mat img, cv::Mat imgBin)
@@ -271,13 +289,13 @@ MatrixXd MarkerManager::cvMatToEigen(cv::Mat input, int rows, int cols)
     {
         for (int c = 0; c < cols; c++)
         {
-            output << input.at<double>(r,c);
+            output(r,c) = input.at<double>(r,c);
         }
     }
     return output;
 }
 
-cv::Mat MarkerManager::eigenToCvMat(Matrix4d input, int rows, int cols)
+cv::Mat MarkerManager::eigenToCvMat(MatrixXd input, int rows, int cols)
 {
     cv::Mat output = cv::Mat(rows,cols,cv::DataType<double>::type);
     for (int r = 0; r < rows; r++)
