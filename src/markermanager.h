@@ -30,6 +30,8 @@ private:
     MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
     cv::Mat eigenToCvMat(Matrix4d input, int rows, int cols);
 
+    cv::Mat rvec;
+    cv::Mat tvec;
     cv::Mat img;
     cv::Mat imgBin;
     Barcode barcode;

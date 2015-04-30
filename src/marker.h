@@ -18,6 +18,7 @@ public:
     Marker();
     void setImageCoord(std::vector<HoldPoint> H);
     cv::Mat getWorldCoord();
+    cv::Mat getWorldCoordTransformed();
     cv::Mat getImageCoord(int orientation);
     std::vector<HoldPoint> sortPointsVertically(std::vector<HoldPoint> H);
     void averageVec();

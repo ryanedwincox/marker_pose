@@ -9,6 +9,15 @@ Marker::Marker()
     rvec = cv::Mat(3,1,cv::DataType<double>::type);
     tvec = cv::Mat(3,1,cv::DataType<double>::type);
 
+    // reset rvec and tvec
+    rvec.at<double>(0) = 0;
+    rvec.at<double>(1) = 0;
+    rvec.at<double>(2) = 0;
+
+    tvec.at<double>(0) = 0;
+    tvec.at<double>(1) = 0;
+    tvec.at<double>(2) = 0;
+
     axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
     projectedAxis = std::vector<cv::Point2f>();
     projectedGrid = std::vector<cv::Point2f>();
@@ -26,6 +35,8 @@ Marker::Marker()
 
     enoughMarkers = false;
     averageingWindow = 5;
+
+    imgCoordOrientation = -1;
 }
 
 void Marker::setWorldCoord()
@@ -103,21 +114,29 @@ cv::Mat Marker::getWorldTransform()
 // returns world coordinates transformed by the world transform
 cv::Mat Marker::getWorldCoord()
 {
-//    for (int i = 0; i < 4; i++)
-//    {
-//        cv::Mat temp = cv::Mat(4,1,cv::DataType<double>::type);
-//        temp.at<double>(0) = (double)worldCoord.at<cv::Point3f>(i).x;
-//        temp.at<double>(1) = (double)worldCoord.at<cv::Point3f>(i).y;
-//        temp.at<double>(2) = (double)worldCoord.at<cv::Point3f>(i).z;
-//        temp.at<double>(3) = 1;
-
-//        temp = worldTransform * temp;
-
-//        worldCoord.at<cv::Point3f>(i).x = (float)temp.at<double>(0);
-//        worldCoord.at<cv::Point3f>(i).y = (float)temp.at<double>(1);
-//        worldCoord.at<cv::Point3f>(i).z = (float)temp.at<double>(2);
-//    }
     return worldCoord;
+}
+
+// returns world coordinates transformed by the world transform
+cv::Mat Marker::getWorldCoordTransformed()
+{
+    cv::Mat worldCoordCopy = cv::Mat(numMarkers,1,cv::DataType<cv::Point3f>::type);
+    for (int i = 0; i < 4; i++)
+    {
+        cv::Mat temp = cv::Mat(4,1,cv::DataType<double>::type);
+        temp.at<double>(0) = (double)worldCoord.at<cv::Point3f>(i).x;
+        temp.at<double>(1) = (double)worldCoord.at<cv::Point3f>(i).y;
+        temp.at<double>(2) = (double)worldCoord.at<cv::Point3f>(i).z;
+        temp.at<double>(3) = 1;
+
+        temp = worldTransform * temp;
+
+        worldCoordCopy.at<cv::Point3f>(i).x = (float)temp.at<double>(0);
+        worldCoordCopy.at<cv::Point3f>(i).y = (float)temp.at<double>(1);
+        worldCoordCopy.at<cv::Point3f>(i).z = (float)temp.at<double>(2);
+    }
+//    std::cout << "worldCoordCopy ***: " << worldCoordCopy << std::endl;
+    return worldCoordCopy;
 }
 
 cv::Mat Marker::getImageCoord(int orientation)
