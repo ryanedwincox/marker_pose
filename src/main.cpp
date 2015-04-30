@@ -29,7 +29,8 @@ std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int mat
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches);
 cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
-void publishCameraTF(cv::Mat rMat, cv::Mat tvec);
+void publishMarkerTFs(vector<Marker> markers);
+void publishTF(Matrix4d T, const char* parent, const char* node);
 void publishMarkerTF();
 void comb(int N, int K);
 
@@ -182,26 +183,56 @@ int main(int argc, char *argv[])
 //        tvecCam = -rMatTrans * tvec;
 
         // Take inverse of T
-        // convert rvec to rMat then to Eigen
+        // convert rvec to rMat then to Eigen and find inverse
         MatrixXd rMat(3,3);
         MatrixXd rMatTrans(3,3);
         rMat = T.topLeftCorner(3,3);
         rMatTrans = rMat.transpose();
 
-        // convert tvec to Eigen
+        // convert tvec to Eigen and find inverse
         MatrixXd tvec(3,1);
         tvec = T.topRightCorner(3,1);
         tvec = -rMatTrans*tvec;
 
-        // convert Eigen back to CV for ROS pulishing
-        cv::Mat rMatCV(3,3,cv::DataType<double>::type);
-        rMatCV = markerManager.eigenToCvMat(rMat,3,3);
-        cv::Mat tvecCV(3,1,cv::DataType<double>::type);
-        tvecCV = markerManager.eigenToCvMat(tvec,3,1);
+        Matrix4d camTf;
+        camTf.topLeftCorner(3,3) = rMatTrans;
+        camTf.topRightCorner(3,1) = tvec;
+        camTf.bottomLeftCorner(1,4) << 0,0,0,1;
+
+//        // convert Eigen back to CV for ROS pulishing
+//        cv::Mat rMatCV(3,3,cv::DataType<double>::type);
+//        rMatCV = markerManager.getMarkers()[0].eigenToCvMat(rMat,3,3);
+//        cv::Mat tvecCV(3,1,cv::DataType<double>::type);
+//        tvecCV = markerManager.getMarkers()[0].eigenToCvMat(tvec,3,1);
+
+        Matrix4d markerOrigin;
+        markerOrigin << 1,0,0,0,
+                        0,1,0,1,
+                        0,0,1,0,
+                        0,0,0,1;
+
+        double theta = PI/2;
+        Matrix4d rotX;
+        rotX << 1,0,0,0,
+                0,cos(theta),-sin(theta),0,
+                0,sin(theta),cos(theta),0,
+                0,0,0,1;
+        Matrix4d rotY;
+        rotY << cos(theta),0,-sin(theta),0,
+                0,1,0,0,
+                sin(theta),0,cos(theta),0,
+                0,0,0,1;
+        Matrix4d rotZ;
+        rotZ << cos(theta),-sin(theta),0,0,
+                sin(theta),cos(theta),0,0,
+                0,0,1,0,
+                0,0,0,1;
+        markerOrigin = markerOrigin*rotZ*rotX;
 
         // publish tf
-        publishMarkerTF();
-        publishCameraTF(rMatCV, tvecCV);
+        publishMarkerTFs(markerManager.getMarkers());
+        publishTF(markerOrigin, "world", "marker_origin");
+        publishTF(camTf, "marker_origin", "camera");
 
 
         // Display images
@@ -215,18 +246,43 @@ int main(int argc, char *argv[])
     }
 }
 
-void publishCameraTF(cv::Mat rMat, cv::Mat tvec)
+//void publishTF(cv::Mat rMat, cv::Mat tvec, const char* parent, const char* node)
+//{
+//    tfScalar m00 = rMat.at<double>(0,0); tfScalar m01 = rMat.at<double>(0,1); tfScalar m02 = rMat.at<double>(0,2);
+//    tfScalar m10 = rMat.at<double>(1,0); tfScalar m11 = rMat.at<double>(1,1); tfScalar m12 = rMat.at<double>(1,2);
+//    tfScalar m20 = rMat.at<double>(2,0); tfScalar m21 = rMat.at<double>(2,1); tfScalar m22 = rMat.at<double>(2,2);
+//    tf::Matrix3x3 rotMat(m00,m01,m02,
+//                        m10,m11,m12,
+//                        m20,m21,m22);
+
+//    static tf::TransformBroadcaster br;
+//    tf::Transform transform(rotMat, tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
+//    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
+//}
+
+void publishTF(Matrix4d T, const char* parent, const char* node)
 {
-    tfScalar m00 = rMat.at<double>(0,0); tfScalar m01 = rMat.at<double>(0,1); tfScalar m02 = rMat.at<double>(0,2);
-    tfScalar m10 = rMat.at<double>(1,0); tfScalar m11 = rMat.at<double>(1,1); tfScalar m12 = rMat.at<double>(1,2);
-    tfScalar m20 = rMat.at<double>(2,0); tfScalar m21 = rMat.at<double>(2,1); tfScalar m22 = rMat.at<double>(2,2);
+    tfScalar m00 = T(0,0); tfScalar m01 = T(0,1); tfScalar m02 = T(0,2);
+    tfScalar m10 = T(1,0); tfScalar m11 = T(1,1); tfScalar m12 = T(1,2);
+    tfScalar m20 = T(2,0); tfScalar m21 = T(2,1); tfScalar m22 = T(2,2);
     tf::Matrix3x3 rotMat(m00,m01,m02,
                         m10,m11,m12,
                         m20,m21,m22);
 
     static tf::TransformBroadcaster br;
-    tf::Transform transform(rotMat, tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "marker", "camera"));
+    tf::Transform transform(rotMat, tf::Vector3(T(0,3), T(1,3), T(2,3)));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
+}
+
+void publishMarkerTFs(vector<Marker> markers)
+{
+//    for (int i = 0; i < markers.size(); i++)
+//    {
+        cv::Mat markerWorldTransform = markers[1].getWorldTransform();
+        MatrixXd markerTransform = markers[1].cvMatToEigen(markerWorldTransform,4,4);
+//        publishTF(markerTransform, "world", (const char*) markers[i].getMarkerID());
+        publishTF(markerTransform, "marker_origin", "marker2");
+//    }
 }
 
 void publishMarkerTF()
@@ -237,7 +293,7 @@ void publishMarkerTF()
     tf::Quaternion q;
     q.setRPY(3.1415/2, 0, 3.1415/2);
     transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker"));
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker_origin"));
 }
 
 // TODO move to search

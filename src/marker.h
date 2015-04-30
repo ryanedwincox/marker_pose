@@ -8,9 +8,12 @@
 #include <list>
 #include <vector>
 #include <queue>
+#include <Eigen/Eigen>
 
 #include "holdpoint.h"
 #include "barcode.h"
+
+using namespace Eigen;
 
 class Marker
 {
@@ -31,6 +34,9 @@ public:
     cv::Mat projectTransformAxis(cv::Mat img, Barcode barcode, cv::Mat newWorldTransform);
     void setWorldCoord();
     void rotateWorldCoord(int rot);
+    int getMarkerID();
+    MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
+    cv::Mat eigenToCvMat(MatrixXd input, int rows, int cols);
 
     cv::Mat rvec;
     cv::Mat tvec;
@@ -49,6 +55,7 @@ private:
     int numMarkers;
     int rotNum;
     int markerID;
+    int foundMarker;
     float targetSpacing;
     cv::Mat worldTransform;
     cv::Mat worldCoord;

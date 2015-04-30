@@ -36,7 +36,7 @@ void MarkerManager::createMarkers()
                              0,1,0,0,
                              0,0,1,0,
                              0,0,0,1;
-    markers.at(0).setWorldTransform(eigenToCvMat(marker0WorldTransform, 4, 4));
+    markers.at(0).setWorldTransform(markers[0].eigenToCvMat(marker0WorldTransform, 4, 4));
 
     Matrix4d marker1WorldTransform;
     double theta = PI/2;
@@ -44,7 +44,7 @@ void MarkerManager::createMarkers()
                              0,          1, 0,           0,
                              sin(theta), 0, cos(theta),  0.3556,
                              0,          0, 0,           1;
-    markers.at(1).setWorldTransform(eigenToCvMat(marker1WorldTransform, 4, 4));
+    markers.at(1).setWorldTransform(markers[0].eigenToCvMat(marker1WorldTransform, 4, 4));
 }
 
 // returns a vector of all markers
@@ -241,13 +241,13 @@ Matrix4d MarkerManager::estimateWorldPose()
 
     // convert tvec to Eigen
     MatrixXd tvecE(3,1);
-    tvecE = cvMatToEigen(tvec,3,1);
+    tvecE = markers[0].cvMatToEigen(tvec,3,1);
 
     // convert rvec to rMat then to Eigen
     cv::Mat rMat(3,3,cv::DataType<double>::type);
     cv::Rodrigues(rvec, rMat);
     MatrixXd rMatE(3,3);
-    rMatE = cvMatToEigen(rMat,3,3);
+    rMatE = markers[0].cvMatToEigen(rMat,3,3);
 
     // Combine Eigen matricies of rvec and tvec into T
     Matrix4d T;
@@ -282,28 +282,4 @@ void MarkerManager::drawTargets(std::vector<HoldPoint> H, cv::Scalar color)
     }
 }
 
-MatrixXd MarkerManager::cvMatToEigen(cv::Mat input, int rows, int cols)
-{
-    MatrixXd output(rows, cols);
-    for (int r = 0; r < rows; r++)
-    {
-        for (int c = 0; c < cols; c++)
-        {
-            output(r,c) = input.at<double>(r,c);
-        }
-    }
-    return output;
-}
 
-cv::Mat MarkerManager::eigenToCvMat(MatrixXd input, int rows, int cols)
-{
-    cv::Mat output = cv::Mat(rows,cols,cv::DataType<double>::type);
-    for (int r = 0; r < rows; r++)
-    {
-        for (int c = 0; c < cols; c++)
-        {
-            output.at<double>(r,c) = input(r,c);
-        }
-    }
-    return output;
-}

@@ -25,8 +25,7 @@ public:
     void drawTargets(std::vector<HoldPoint> H, cv::Scalar color);
     void setImage(cv::Mat img, cv::Mat imgBin);
     cv::Mat getImage();
-    MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
-    cv::Mat eigenToCvMat(MatrixXd input, int rows, int cols);
+    void publishMarkerTFs();
 
 private:
     cv::Mat rvec;

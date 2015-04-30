@@ -5,6 +5,8 @@ Marker::Marker()
     numMarkers = 4; // targets per marker
     targetSpacing = 0.105; // in meters
 
+    foundMarker = -1;
+
     // Initialize rvec tvec
     rvec = cv::Mat(3,1,cv::DataType<double>::type);
     tvec = cv::Mat(3,1,cv::DataType<double>::type);
@@ -165,7 +167,7 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
     bool useExtrinsicGuess = false;
     int numOrientations = 2;
 
-    int foundMarker = -1;
+    foundMarker = -1;
     markerID = -1;
 
     // Iterate through both possible orientations
@@ -211,6 +213,11 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
         tvec.at<double>(2) = 0;
     }
 
+}
+
+int Marker::getMarkerID()
+{
+    return markerID;
 }
 
 cv::Mat Marker::projectAxis(cv::Mat img, Barcode barcode)
@@ -465,4 +472,30 @@ void Marker::averageVec ()
         tvec.at<double>(1) = tvecSum1 / tvecQueue1.size();
         tvec.at<double>(2) = tvecSum2 / tvecQueue2.size();
     }
+}
+
+MatrixXd Marker::cvMatToEigen(cv::Mat input, int rows, int cols)
+{
+    MatrixXd output(rows, cols);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            output(r,c) = input.at<double>(r,c);
+        }
+    }
+    return output;
+}
+
+cv::Mat Marker::eigenToCvMat(MatrixXd input, int rows, int cols)
+{
+    cv::Mat output = cv::Mat(rows,cols,cv::DataType<double>::type);
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            output.at<double>(r,c) = input(r,c);
+        }
+    }
+    return output;
 }
