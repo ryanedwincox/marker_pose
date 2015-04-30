@@ -24,7 +24,7 @@ public:
     cv::Mat getWorldCoordTransformed();
     cv::Mat getImageCoord(int orientation);
     std::vector<HoldPoint> sortPointsVertically(std::vector<HoldPoint> H);
-    void averageVec();
+
     void setWorldTransform(cv::Mat worldTransform);
     cv::Mat getWorldTransform();
     void poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode);
@@ -51,7 +51,7 @@ private:
     std::list<HoldPoint> merge(std::list<HoldPoint> left, std::list<HoldPoint> right);
 
     // Variables
-    int averageingWindow;
+
     int numMarkers;
     int rotNum;
     int markerID;

@@ -36,7 +36,6 @@ Marker::Marker()
 //    imageCoordVec = std::vector<cv::Mat>(8, imageCoord);
 
     enoughMarkers = false;
-    averageingWindow = 5;
 
     imgCoordOrientation = -1;
 }
@@ -410,69 +409,7 @@ std::list<HoldPoint> Marker::merge(std::list<HoldPoint> left, std::list<HoldPoin
     return result;
 }
 
-void Marker::averageVec ()
-{
-    static std::queue<double> rvecQueue0;
-    static std::queue<double> rvecQueue1;
-    static std::queue<double> rvecQueue2;
-    static std::queue<double> tvecQueue0;
-    static std::queue<double> tvecQueue1;
-    static  std::queue<double> tvecQueue2;
 
-    static double rvecSum0;
-    static double rvecSum1;
-    static  double rvecSum2;
-    static double tvecSum0;
-    static double tvecSum1;
-    static double tvecSum2;
-
-    // Add vectors to sum
-    rvecSum0 = rvecSum0 + rvec.at<double>(0);
-    rvecSum1 = rvecSum1 + rvec.at<double>(1);
-    rvecSum2 = rvecSum2 + rvec.at<double>(2);
-    tvecSum0 = tvecSum0 + tvec.at<double>(0);
-    tvecSum1 = tvecSum1 + tvec.at<double>(1);
-    tvecSum2 = tvecSum2 + tvec.at<double>(2);
-
-    // Add vectors to queue
-    rvecQueue0.push(rvec.at<double>(0));
-    rvecQueue1.push(rvec.at<double>(1));
-    rvecQueue2.push(rvec.at<double>(2));
-    tvecQueue0.push(tvec.at<double>(0));
-    tvecQueue1.push(tvec.at<double>(1));
-    tvecQueue2.push(tvec.at<double>(2));
-
-    if (rvecQueue0.size() >= averageingWindow)
-    {
-        double rvecOld0 = rvecQueue0.front();
-        double rvecOld1 = rvecQueue1.front();
-        double rvecOld2 = rvecQueue2.front();
-        double tvecOld0 = tvecQueue0.front();
-        double tvecOld1 = tvecQueue1.front();
-        double tvecOld2 = tvecQueue2.front();
-
-        rvecQueue0.pop();
-        rvecQueue1.pop();
-        rvecQueue2.pop();
-        tvecQueue0.pop();
-        tvecQueue1.pop();
-        tvecQueue2.pop();
-
-        rvecSum0 = rvecSum0 - rvecOld0;
-        rvecSum1 = rvecSum1 - rvecOld1;
-        rvecSum2 = rvecSum2 - rvecOld2;
-        tvecSum0 = tvecSum0 - tvecOld0;
-        tvecSum1 = tvecSum1 - tvecOld1;
-        tvecSum2 = tvecSum2 - tvecOld2;
-
-        rvec.at<double>(0) = rvecSum0 / rvecQueue0.size();
-        rvec.at<double>(1) = rvecSum1 / rvecQueue1.size();
-        rvec.at<double>(2) = rvecSum2 / rvecQueue2.size();
-        tvec.at<double>(0) = tvecSum0 / tvecQueue0.size();
-        tvec.at<double>(1) = tvecSum1 / tvecQueue1.size();
-        tvec.at<double>(2) = tvecSum2 / tvecQueue2.size();
-    }
-}
 
 MatrixXd Marker::cvMatToEigen(cv::Mat input, int rows, int cols)
 {

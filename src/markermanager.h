@@ -26,8 +26,10 @@ public:
     void setImage(cv::Mat img, cv::Mat imgBin);
     cv::Mat getImage();
     void publishMarkerTFs();
+    Matrix4d averageVec(Matrix4d T);
 
 private:
+    int averageingWindow;
     cv::Mat rvec;
     cv::Mat tvec;
     cv::Mat img;

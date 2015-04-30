@@ -29,9 +29,8 @@ std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int mat
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches);
 cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
-void publishMarkerTFs(vector<Marker> markers);
+void publishMarkerTFs(vector<Marker> markers, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
-void publishMarkerTF();
 void comb(int N, int K);
 
 int main(int argc, char *argv[])
@@ -171,6 +170,8 @@ int main(int argc, char *argv[])
 
         Matrix4d T = markerManager.estimateWorldPose();
 
+        T = markerManager.averageVec(T);
+
         img = markerManager.getImage();
 
 //        // inverse pose estimation to get camera position
@@ -230,7 +231,7 @@ int main(int argc, char *argv[])
         markerOrigin = markerOrigin*rotZ*rotX;
 
         // publish tf
-        publishMarkerTFs(markerManager.getMarkers());
+        publishMarkerTFs(markerManager.getMarkers(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
         publishTF(camTf, "marker_origin", "camera");
 
@@ -246,20 +247,6 @@ int main(int argc, char *argv[])
     }
 }
 
-//void publishTF(cv::Mat rMat, cv::Mat tvec, const char* parent, const char* node)
-//{
-//    tfScalar m00 = rMat.at<double>(0,0); tfScalar m01 = rMat.at<double>(0,1); tfScalar m02 = rMat.at<double>(0,2);
-//    tfScalar m10 = rMat.at<double>(1,0); tfScalar m11 = rMat.at<double>(1,1); tfScalar m12 = rMat.at<double>(1,2);
-//    tfScalar m20 = rMat.at<double>(2,0); tfScalar m21 = rMat.at<double>(2,1); tfScalar m22 = rMat.at<double>(2,2);
-//    tf::Matrix3x3 rotMat(m00,m01,m02,
-//                        m10,m11,m12,
-//                        m20,m21,m22);
-
-//    static tf::TransformBroadcaster br;
-//    tf::Transform transform(rotMat, tf::Vector3(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2)));
-//    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
-//}
-
 void publishTF(Matrix4d T, const char* parent, const char* node)
 {
     tfScalar m00 = T(0,0); tfScalar m01 = T(0,1); tfScalar m02 = T(0,2);
@@ -274,26 +261,15 @@ void publishTF(Matrix4d T, const char* parent, const char* node)
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
 }
 
-void publishMarkerTFs(vector<Marker> markers)
+void publishMarkerTFs(vector<Marker> markers, const char* parent)
 {
 //    for (int i = 0; i < markers.size(); i++)
 //    {
         cv::Mat markerWorldTransform = markers[1].getWorldTransform();
         MatrixXd markerTransform = markers[1].cvMatToEigen(markerWorldTransform,4,4);
 //        publishTF(markerTransform, "world", (const char*) markers[i].getMarkerID());
-        publishTF(markerTransform, "marker_origin", "marker2");
+        publishTF(markerTransform, parent, "marker2");
 //    }
-}
-
-void publishMarkerTF()
-{
-    static tf::TransformBroadcaster br;
-    tf::Transform transform;
-    transform.setOrigin(tf::Vector3(0,1,0));
-    tf::Quaternion q;
-    q.setRPY(3.1415/2, 0, 3.1415/2);
-    transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "marker_origin"));
 }
 
 // TODO move to search
