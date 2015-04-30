@@ -29,7 +29,7 @@ std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int mat
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches);
 cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
-void publishMarkerTFs(vector<Marker> markers, const char* parent);
+void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
 void comb(int N, int K);
 
@@ -162,26 +162,17 @@ int main(int argc, char *argv[])
 
         markerManager.setImage(img, imgBin);
 
-        markerManager.createMarkers();
-
         markerManager.drawTargets(H, cv::Scalar(0,0,255));
 
         markerManager.clusterTargetInputs(H);
+
+        markerManager.setMarkerTransforms();
 
         Matrix4d T = markerManager.estimateWorldPose();
 
         T = markerManager.averageVec(T);
 
         img = markerManager.getImage();
-
-//        // inverse pose estimation to get camera position
-//        cv::Mat rMat(3,3,cv::DataType<double>::type);
-//        cv::Mat rMatTrans(3,3,cv::DataType<double>::type);
-//        cv::Mat tvecCam(3,1,cv::DataType<double>::type);
-
-//        cv::Rodrigues(rvec, rMat);
-//        cv::transpose(rMat, rMatTrans);
-//        tvecCam = -rMatTrans * tvec;
 
         // Take inverse of T
         // convert rvec to rMat then to Eigen and find inverse
@@ -199,12 +190,6 @@ int main(int argc, char *argv[])
         camTf.topLeftCorner(3,3) = rMatTrans;
         camTf.topRightCorner(3,1) = tvec;
         camTf.bottomLeftCorner(1,4) << 0,0,0,1;
-
-//        // convert Eigen back to CV for ROS pulishing
-//        cv::Mat rMatCV(3,3,cv::DataType<double>::type);
-//        rMatCV = markerManager.getMarkers()[0].eigenToCvMat(rMat,3,3);
-//        cv::Mat tvecCV(3,1,cv::DataType<double>::type);
-//        tvecCV = markerManager.getMarkers()[0].eigenToCvMat(tvec,3,1);
 
         Matrix4d markerOrigin;
         markerOrigin << 1,0,0,0,
@@ -231,7 +216,7 @@ int main(int argc, char *argv[])
         markerOrigin = markerOrigin*rotZ*rotX;
 
         // publish tf
-        publishMarkerTFs(markerManager.getMarkers(), "marker_origin");
+        publishMarkerTFs(markerManager.getMarkerWorldTransforms(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
         publishTF(camTf, "marker_origin", "camera");
 
@@ -261,15 +246,11 @@ void publishTF(Matrix4d T, const char* parent, const char* node)
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
 }
 
-void publishMarkerTFs(vector<Marker> markers, const char* parent)
+void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent)
 {
-//    for (int i = 0; i < markers.size(); i++)
-//    {
-        cv::Mat markerWorldTransform = markers[1].getWorldTransform();
-        MatrixXd markerTransform = markers[1].cvMatToEigen(markerWorldTransform,4,4);
-//        publishTF(markerTransform, "world", (const char*) markers[i].getMarkerID());
-        publishTF(markerTransform, parent, "marker2");
-//    }
+    publishTF(markerTransforms[0], parent, "marker0");
+
+    publishTF(markerTransforms[1], parent, "marker1");
 }
 
 // TODO move to search

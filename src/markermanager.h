@@ -15,7 +15,6 @@ class MarkerManager
 {
 public:
     MarkerManager(int numMarkers, Barcode barcode);
-    void createMarkers();
     vector<Marker> getMarkers();
     void clusterTargetInputs(vector<HoldPoint> H);
     vector<HoldPoint> findTargetCluster();
@@ -27,6 +26,8 @@ public:
     cv::Mat getImage();
     void publishMarkerTFs();
     Matrix4d averageVec(Matrix4d T);
+    void setMarkerTransforms();
+    vector<Matrix4d> getMarkerWorldTransforms();
 
 private:
     int averageingWindow;
@@ -39,6 +40,7 @@ private:
     vector<HoldPoint> H;
     vector<Marker> markers;
     vector<int> dist;
+    vector<Matrix4d> markerWorldTransforms;
 };
 
 #endif // MARKERMANAGER_H

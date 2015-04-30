@@ -28,17 +28,16 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     tvec.at<double>(2) = 0;
 
     averageingWindow = 5;
-}
 
-// defines transforms from world origin to each marker and its number
-void MarkerManager::createMarkers()
-{
+    // define all marker world transforms
+    markerWorldTransforms = vector<Matrix4d> (numMarkers);
+
     Matrix4d marker0WorldTransform;
     marker0WorldTransform << 1,0,0,0,
                              0,1,0,0,
                              0,0,1,0,
                              0,0,0,1;
-    markers.at(0).setWorldTransform(markers[0].eigenToCvMat(marker0WorldTransform, 4, 4));
+    markerWorldTransforms[0] = marker0WorldTransform;
 
     Matrix4d marker1WorldTransform;
     double theta = PI/2;
@@ -46,7 +45,21 @@ void MarkerManager::createMarkers()
                              0,          1, 0,           0,
                              sin(theta), 0, cos(theta),  0.3556,
                              0,          0, 0,           1;
-    markers.at(1).setWorldTransform(markers[0].eigenToCvMat(marker1WorldTransform, 4, 4));
+   markerWorldTransforms[1] = marker1WorldTransform;
+}
+
+void MarkerManager::setMarkerTransforms()
+{
+    for (int i = 0; i < numMarkers; i++)
+    {
+        // for every marker set transform based on that markers ID
+        markers[i].setWorldTransform(markers[i].eigenToCvMat(markerWorldTransforms[markers[i].getMarkerID()],4,4));
+    }
+}
+
+vector<Matrix4d> MarkerManager::getMarkerWorldTransforms()
+{
+    return markerWorldTransforms;
 }
 
 // returns a vector of all markers
@@ -55,6 +68,7 @@ vector<Marker> MarkerManager::getMarkers()
     return markers;
 }
 
+// TODO make sure order of markerIDs in H matches order of markers which is 1234...
 void MarkerManager::clusterTargetInputs(vector<HoldPoint> H)
 {
     this->H = H;
@@ -192,7 +206,7 @@ Matrix4d MarkerManager::estimateWorldPose()
             newWorldCoord = markers[i].getWorldCoordTransformed();
 
 //            cout << "new image coord: " << newImageCoord << endl;
-//            cout << "new world coord: " << newWorldCoord << endl;
+            cout << "new world coord: " << newWorldCoord << endl;
 
             totalImageCoord.at<cv::Point2f>(4*validIndex+0) = newImageCoord.at<cv::Point2f>(0);
             totalImageCoord.at<cv::Point2f>(4*validIndex+1) = newImageCoord.at<cv::Point2f>(1);
