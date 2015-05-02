@@ -27,7 +27,8 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     tvec.at<double>(1) = 0;
     tvec.at<double>(2) = 0;
 
-    averageingWindow = 5;
+    averageingWindow = 25;
+    validPoseEstimate = false;
 
     // define all marker world transforms
     markerWorldTransforms = vector<Matrix4d> (numMarkers);
@@ -206,7 +207,7 @@ Matrix4d MarkerManager::estimateWorldPose()
             newWorldCoord = markers[i].getWorldCoordTransformed();
 
 //            cout << "new image coord: " << newImageCoord << endl;
-            cout << "new world coord: " << newWorldCoord << endl;
+//            cout << "new world coord: " << newWorldCoord << endl;
 
             totalImageCoord.at<cv::Point2f>(4*validIndex+0) = newImageCoord.at<cv::Point2f>(0);
             totalImageCoord.at<cv::Point2f>(4*validIndex+1) = newImageCoord.at<cv::Point2f>(1);
@@ -222,6 +223,7 @@ Matrix4d MarkerManager::estimateWorldPose()
         }
     }
 
+    //**
 //    cout << "total image coord: " << totalImageCoord << endl;
 //    cout << "total world coord: " << totalWorldCoord << endl;
 
@@ -232,9 +234,11 @@ Matrix4d MarkerManager::estimateWorldPose()
 //    {
 //        cv::circle(img, temp.at<cv::Point2f>(i), 3, cv::Scalar(255,255,0), -1);
 //    }
+    //**
 
     if (validMarkers > 0)
     {
+        validPoseEstimate = true;
         int flags = cv::ITERATIVE;
         bool useExtrinsicGuess = false;
         cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
@@ -253,6 +257,10 @@ Matrix4d MarkerManager::estimateWorldPose()
         cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
         cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
         cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
+    }
+    else
+    {
+        validPoseEstimate = false;
     }
 
     // convert tvec to Eigen

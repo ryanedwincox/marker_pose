@@ -178,6 +178,7 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
         if (!markerTransformationZero())
         {
             barcode.projectSamplePoints(rvec, tvec);
+            barcode.projectSampleRegions(rvec, tvec);
 
             // Get barcode value
             foundMarker = barcode.getMarkerNumber(imgBin);
@@ -283,10 +284,10 @@ cv::Mat Marker::projectTransformAxis(cv::Mat img, Barcode barcode, cv::Mat newWo
 cv::Mat Marker::projectBarcodeGrid(cv::Mat img, Barcode barcode)
 {
     // Project barcode layout
-    barcode.barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){-0.031,-0.031,0};
-    barcode.barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){-0.031, 0.031,0};
-    barcode.barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){ 0.031,-0.031,0};
-    barcode.barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){ 0.031, 0.031,0};
+    barcode.barcodeGrid.at<cv::Point3f>(0) = (cv::Point3f){-barcode.barcodeGridWidth/2,-barcode.barcodeGridWidth/2,0};
+    barcode.barcodeGrid.at<cv::Point3f>(1) = (cv::Point3f){-barcode.barcodeGridWidth/2, barcode.barcodeGridWidth/2,0};
+    barcode.barcodeGrid.at<cv::Point3f>(2) = (cv::Point3f){ barcode.barcodeGridWidth/2,-barcode.barcodeGridWidth/2,0};
+    barcode.barcodeGrid.at<cv::Point3f>(3) = (cv::Point3f){ barcode.barcodeGridWidth/2, barcode.barcodeGridWidth/2,0};
 
     cv::projectPoints(barcode.barcodeGrid, rvec, tvec, barcode.cameraMatrix, barcode.distCoeffs, projectedGrid);
 

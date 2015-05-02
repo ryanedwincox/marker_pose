@@ -10,6 +10,7 @@
 #include <queue>
 #include "math.h"
 #include "limits.h"
+#include <sstream>
 
 #include "search.h"
 #include "holdpoint.h"
@@ -25,7 +26,7 @@
 #include <turtlesim/Pose.h>
 
 // declare local methods
-std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
+std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
 std::list<cv::Point> averageMatches(std::list<cv::Point> matches);
 cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
@@ -37,7 +38,8 @@ int main(int argc, char *argv[])
 {
     //Create video capture object
     int cameraNum = 0;
-    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/SSLBarcodePortageBay_20150411_13 59 32.avi";
+//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
+    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
     cv::VideoCapture cap(cameraNum);
     if(!cap.isOpened())  // check if we succeeded
     {
@@ -95,7 +97,6 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh;
     //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
-    int newFrame = 0;
     cv::Mat img;
     cap >> img;
 
@@ -127,6 +128,8 @@ int main(int argc, char *argv[])
         int c = 0;
         cv::Mat imgBin;
         cv::adaptiveThreshold(imgGray, imgBin, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, blockSize, c);
+//        double thresh = 175;
+//        cv::threshold(imgGray, imgBin, thresh, 255, cv::THRESH_BINARY);
 
         // transpose for verticle detection
         cv::Mat imgBinVert;
@@ -150,8 +153,8 @@ int main(int argc, char *argv[])
 
         // read matches from kernel
         std::list< cv::Point > matches;
-        matches = readMatches(s1, matches, matchIndex1, true);
-        matches = readMatches(s2, matches, matchIndex2, false);
+        matches = readMatches(img, s1, matches, matchIndex1, true);
+        matches = readMatches(img, s2, matches, matchIndex2, false);
 
 //        std::cout << "Number of matches: " << matches.size() <<std::endl;
 
@@ -172,7 +175,9 @@ int main(int argc, char *argv[])
 
         T = markerManager.averageVec(T);
 
-        img = markerManager.getImage();
+//        std::cout << "t: " << T << std::endl;
+
+//        img = markerManager.getImage(); // don't seem to need this
 
         // Take inverse of T
         // convert rvec to rMat then to Eigen and find inverse
@@ -218,7 +223,10 @@ int main(int argc, char *argv[])
         // publish tf
         publishMarkerTFs(markerManager.getMarkerWorldTransforms(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
-        publishTF(camTf, "marker_origin", "camera");
+        if (markerManager.validPoseEstimate)
+        {
+            publishTF(camTf, "marker_origin", "camera");
+        }
 
 
         // Display images
@@ -240,21 +248,29 @@ void publishTF(Matrix4d T, const char* parent, const char* node)
     tf::Matrix3x3 rotMat(m00,m01,m02,
                         m10,m11,m12,
                         m20,m21,m22);
+    tf::Vector3 transVec(T(0,3), T(1,3), T(2,3));
 
     static tf::TransformBroadcaster br;
-    tf::Transform transform(rotMat, tf::Vector3(T(0,3), T(1,3), T(2,3)));
+    tf::Transform transform(rotMat, transVec);
+    tf::Quaternion Q = transform.getRotation();
+    Q.normalize();
+    transform.setRotation(Q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
 }
 
+// publish all static world marker transforms
 void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent)
 {
-    publishTF(markerTransforms[0], parent, "marker0");
-
-    publishTF(markerTransforms[1], parent, "marker1");
+    for (int i = 0; i < markerTransforms.size(); i++)
+    {
+        ostringstream ostr;
+        ostr << "marker" << i;
+        publishTF(markerTransforms[i], parent, ostr.str().c_str());
+    }
 }
 
 // TODO move to search
-std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int matchIndex, bool horz)
+std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> matches, int matchIndex, bool horz)
 {
     // Read all matches from OpenCL kernel
     if (matchIndex > 0)
@@ -276,10 +292,11 @@ std::list<cv::Point> readMatches(Search s, std::list<cv::Point> matches, int mat
             }
             matches.push_front(match);
 
-//                // Color a point at each match
-//                cv::circle(img, matches.front(), 3, cv::Scalar(0,255,0), -1);
+            // Color a point at each match
+            cv::circle(img, matches.front(), 1, cv::Scalar(0,255,0), -1);
         }
     }
+//    cv::circle(img, matches.front(), 15, cv::Scalar(0,255,0), 1);
     return matches;
 }
 
@@ -299,7 +316,7 @@ std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
 
         int i = 0;
         int count = 0;
-        int radius = 40;
+        int radius = 20;
 
         // Compare all remaining matches and if they are close to the current match then they are in the same cluster
         while (i < matches.size())
@@ -317,7 +334,8 @@ std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
         }
 
         // only count matches if there are several in a cluster
-        int minClusterSize = 20;
+        int minClusterSize = 12;
+//        std::cout << "count" << count << std::endl;
         if (count > minClusterSize)
         {
             cv::Point avgMatch (xsum/count, ysum/count);

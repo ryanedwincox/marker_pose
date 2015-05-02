@@ -7,10 +7,12 @@ Barcode::Barcode()
 
     barcodeGrid = cv::Mat(4,1,cv::DataType<cv::Point3f>::type);
     samplePoints = cv::Mat(9,1,cv::DataType<cv::Point3f>::type);
+    sampleRegions = cv::Mat(36,1,cv::DataType<cv::Point3f>::type);
 
-
+    barcodeGridWidth = 0.062;
 
     projectedSamplePoints = std::vector<cv::Point2f>();
+    projectedSampleRegions = std::vector<cv::Point2f>();
 
     // define barcode patterns
     barcodes[0][0] = 0; barcodes[0][1] = 0; barcodes[0][2] = 0;
@@ -54,13 +56,9 @@ void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w
     this->h = h;
 }
 
-
-
-
-
 void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
 {
-    float d = 0.02;
+    float d = barcodeGridWidth/3; // the width of 1 box
     samplePoints.at<cv::Point3f>(0) = (cv::Point3f){-d,-d,0};
     samplePoints.at<cv::Point3f>(1) = (cv::Point3f){ 0,-d,0};
     samplePoints.at<cv::Point3f>(2) = (cv::Point3f){ d,-d,0};
@@ -72,6 +70,21 @@ void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
     samplePoints.at<cv::Point3f>(8) = (cv::Point3f){ d, d,0};
 
     cv::projectPoints(samplePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedSamplePoints);
+}
+
+void Barcode::projectSampleRegions(cv::Mat rvec, cv::Mat tvec)
+{
+    float r = barcodeGridWidth/6; // barcodeGridWidth/6 is the radius of one box but probably want slightly smaller than that
+    for (int i = 0; i < 9; i++)
+    {
+        cv::Point3f samplePoint = samplePoints.at<cv::Point3f>(i);
+        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x-r,samplePoint.y-r,0};
+        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x+r,samplePoint.y-r,0};
+        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x-r,samplePoint.y+r,0};
+        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x+r,samplePoint.y+r,0};
+    }
+
+    cv::projectPoints(sampleRegions, rvec, tvec, cameraMatrix, distCoeffs, projectedSampleRegions);
 }
 
 // return true if z axis of marker transform is pointed towards the camera
@@ -109,7 +122,8 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
 //    std::cout << "barcode input: ";
     for (int i = 0; i < numSamples; i++)
     {
-        barcodeInput[i] = getSectionValue(imgBin, projectedSamplePoints[i], w, h);
+        barcodeInput[i] = getRegionValue(imgBin, projectedSamplePoints[i]);
+//        barcodeInput[i] = getAveragedRegionValue(imgBin, projectedSampleRegions[4*i+0], projectedSampleRegions[4*i+1], projectedSampleRegions[4*i+2], projectedSampleRegions[4*i+3]);
 //        std::cout << barcodeInput[i];
     }
 
@@ -160,17 +174,47 @@ void Barcode::rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec)
     }
 }
 
-// TODO sample and average several points
-int Barcode::getSectionValue(cv::Mat imgBin, cv::Point2f samplePoint, int w, int h)
+// Returns value of center point
+int Barcode::getRegionValue(cv::Mat imgBin, cv::Point2f point)
 {
-    if (samplePoint.x >= 0 && samplePoint.y >= 0 && samplePoint.x <= w && samplePoint.y <= h)
+    if (pointInFrame(point))
+//    if (point.x >= 0 && point.y >= 0 && point.x <= w && point.y <= h)
     {
-        return (int)imgBin.at<uchar>(samplePoint.y,samplePoint.x) / 255;
+        return (int)imgBin.at<uchar>(point.y,point.x) / 255;
     }
     else
     {
         return -1;
     }
+}
+
+// Returns the averaged value of barcode region
+// parameters TopLeft, TopRight, BottomLeft, BottomRight
+int Barcode::getAveragedRegionValue(cv::Mat imgBin, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR)
+{
+    if (pointInFrame(TL) && pointInFrame(TR) && pointInFrame(BL) && pointInFrame(BR))
+    {
+        double m = (TR.y-TL.y)/(TR.x-TL.x);
+        double b = TL.y - m*TL.x;
+        int sum = 0;
+        for (int x = TL.x; x < TR.x; x++)
+        {
+            sum += imgBin.at<uchar>(x, m*x+b);
+            imgBin.at<uchar>(x, m*x+b) = 255;
+        }
+        int rowAvg = sum/(TL.x-TR.x);
+        std::cout << "rowAvg: " << rowAvg << std::endl;
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+bool Barcode::pointInFrame(cv::Point2f point)
+{
+    return point.x >= 0 && point.y >= 0 && point.x <= w && point.y <= h;
 }
 
 int Barcode::getImageWidth()

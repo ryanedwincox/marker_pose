@@ -29,6 +29,8 @@ public:
     void setMarkerTransforms();
     vector<Matrix4d> getMarkerWorldTransforms();
 
+    bool validPoseEstimate;
+
 private:
     int averageingWindow;
     cv::Mat rvec;
