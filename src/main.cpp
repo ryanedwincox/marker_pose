@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
 {
     //Create video capture object
     int cameraNum = 0;
-//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
-    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
+    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
+//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
     cv::VideoCapture cap(cameraNum);
     if(!cap.isOpened())  // check if we succeeded
     {
@@ -102,6 +102,9 @@ int main(int argc, char *argv[])
 
     int w = img.cols;
     int h = img.rows;
+
+    std::cout << "image width: " << w << std::endl;
+    std::cout << "image height: " << h << std::endl;
 
     Barcode barcode;
     barcode.setCameraParmeters(cameraMatrix, distCoeffs, w, h);
@@ -293,7 +296,7 @@ std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> mat
             matches.push_front(match);
 
             // Color a point at each match
-            cv::circle(img, matches.front(), 1, cv::Scalar(0,255,0), -1);
+//            cv::circle(img, matches.front(), 1, cv::Scalar(0,255,0), -1);
         }
     }
 //    cv::circle(img, matches.front(), 15, cv::Scalar(0,255,0), 1);

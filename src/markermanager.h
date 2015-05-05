@@ -43,6 +43,7 @@ private:
     vector<Marker> markers;
     vector<int> dist;
     vector<Matrix4d> markerWorldTransforms;
+    SolveP3P poseEst;
 };
 
 #endif // MARKERMANAGER_H

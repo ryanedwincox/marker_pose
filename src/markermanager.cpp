@@ -42,11 +42,21 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
 
     Matrix4d marker1WorldTransform;
     double theta = PI/2;
-    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.10795,
+    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.10795, // office
                              0,          1, 0,           0,
                              sin(theta), 0, cos(theta),  0.3556,
                              0,          0, 0,           1;
+//    marker1WorldTransform << 1,0,0,0,
+//                             0,1,0,0,
+//                             0,0,1,0,
+//                             0,0,0,1;
+//    marker1WorldTransform << 1,0,0,0.3683,
+//                             0,1,0,0,
+//                             0,0,1,0,
+//                             0,0,0,1;
    markerWorldTransforms[1] = marker1WorldTransform;
+
+   poseEst = SolveP3P();
 }
 
 void MarkerManager::setMarkerTransforms()
@@ -241,8 +251,20 @@ Matrix4d MarkerManager::estimateWorldPose()
         validPoseEstimate = true;
         int flags = cv::ITERATIVE;
         bool useExtrinsicGuess = false;
+
+        // use opencv solve pnp function
         cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
+        // my own solve pnp function
+        poseEst.solveP3P(totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs);
+
+//        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
+//        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
+//        std::cout << "rvec: " << rvec << std::endl;
+//        std::cout << "tvec: " << tvec << std::endl;
+
+//        // check z direction
+//        std::cout << "zdirection: " << barcode.zDirection(rvec) << std::endl;
 
         // project axis
         cv::Mat axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type); // 1 marker

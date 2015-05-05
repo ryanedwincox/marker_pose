@@ -46,6 +46,10 @@ set(SOURCE_FILES
     src/holdpoint.h
     src/search.cpp
     src/search.h
+    src/solvep3p.cpp
+    src/solvep3p.h
+    src/poly34.cpp
+    src/poly34.h
     src/combinations.cpp
     src/combinations.h
     src/kalman.cpp

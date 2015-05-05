@@ -12,6 +12,7 @@
 
 #include "holdpoint.h"
 #include "barcode.h"
+#include "solvep3p.h"
 
 using namespace Eigen;
 
