@@ -46,10 +46,10 @@ set(SOURCE_FILES
     src/holdpoint.h
     src/search.cpp
     src/search.h
-    src/combinations.cpp
-    src/combinations.h
-    src/kalman.cpp
-    src/kalman.h
+#    src/combinations.cpp
+#    src/combinations.h
+#    src/kalman.cpp
+#    src/kalman.h
     src/main.cpp
     cl/findSSL.cl
     manifest.xml

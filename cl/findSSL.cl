@@ -1,3 +1,5 @@
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_local_int32_base_atomics : enable
 #define LOCAL_SIZE 256  // size of local workspace
 __kernel void filter_kernel(
         const __global uchar * img, //bgr
@@ -39,14 +41,14 @@ __kernel void filter_kernel(
         int sumMismatch2 = 0;
         for (int i = 10; i < win; i++)
         {
-            if (xpos+i <= w)
+            if (core+i <= w)
             {
                 int ip = i*p;
                 sumMatch1 = sumMatch1 + abs(imgRow[core+i] - imgRow[core+ip]) / 255;
                 int irootp = i*sqrt(p);
                 sumMismatch1 = sumMismatch1 + abs(imgRow[core+i] - imgRow[core+irootp]) / 255;
             }
-            if (xpos-i >= 0)
+            if (core-i >= 0)
             {
                 int ip = i*p;
                 sumMatch2 = sumMatch2 + abs(imgRow[core-i] - imgRow[core-ip]) / 255;
@@ -58,11 +60,12 @@ __kernel void filter_kernel(
         double m1 = (double) (sumMismatch1 - sumMatch1) / win; // matching function value
         double m2 = (double) (sumMismatch2 - sumMatch2) / win; // matching function value
 
+        newImg[globalPos] = m1 * 255;
 
-        double thresh = 0.58;
+        double thresh = 0.60;
         if (m1 > thresh)
         {
-            newImg[globalPos] = m1 * 255;
+            //newImg[globalPos] = m1 * 255;
 
             // write corrdinates of matches to matches and increment matches index twice to store corrdinates in the correct spot
             int index = atomic_inc(matchesIndex);
@@ -72,7 +75,7 @@ __kernel void filter_kernel(
         }
         else if (m2 > thresh)
         {
-            newImg[globalPos] = m2 * 255;
+            //newImg[globalPos] = m2 * 255;
 
             // write corrdinates of matches to matches and increment matches index twice to store corrdinates in the correct spot
             int index = atomic_inc(matchesIndex);
@@ -82,7 +85,7 @@ __kernel void filter_kernel(
         }
         else
         {
-            newImg[globalPos] = 0;
+            //newImg[globalPos] = 0;
         }
     }
 }

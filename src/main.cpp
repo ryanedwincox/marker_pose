@@ -18,7 +18,7 @@
 #include "barcode.h"
 #include "combinations.h"
 #include "markermanager.h"
-#include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
+//#include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
 
 // ROS includes
 #include <ros/ros.h>
@@ -34,6 +34,8 @@ void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
 void comb(int N, int K);
 
+//CL_SUCCESS
+
 int main(int argc, char *argv[])
 {
     //Create video capture object
@@ -46,13 +48,17 @@ int main(int argc, char *argv[])
         std::cout << "camera not found" << std::endl;
         return -1;
     }
+
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
+
 //    cap.set(CV_CAP_PROP_FPS,30);
 
 //    double fps=cap.get(CV_CAP_PROP_FPS);
 //    std::cout << fps << std::endl;
 
     // define kernel files
-    const char * findSSLClPath = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/cl/findSSL.cl";
+    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;
@@ -65,7 +71,6 @@ int main(int argc, char *argv[])
     // Create vector of holdPoint filters for each marker
     HoldPoint hold;
     std::vector<HoldPoint> H;
-
 
     // firstTime is used to insure the image buffers are only created once
     bool firstTime = true;
@@ -111,7 +116,7 @@ int main(int argc, char *argv[])
 
     while (cap.isOpened())
     {
-        cap >> img;
+        cap.read(img);
 
 
         if (VERBOSE)
@@ -227,7 +232,6 @@ int main(int argc, char *argv[])
         {
             publishTF(camTf, "marker_origin", "camera");
         }
-
 
         // Display images
         cv::imshow("Binary Image", imgBin);

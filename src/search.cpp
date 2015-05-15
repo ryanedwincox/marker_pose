@@ -172,6 +172,8 @@ void Search::setImage(cv::Mat img)
         cout << "clImage Buffer error: " << err << "\n";
     }
 
+    cout << "finish: " << clFinish(queue) << endl;
+
     // Create an OpenCL buffer for the result
     clResult = clCreateBuffer(context,
                               CL_MEM_WRITE_ONLY,
@@ -182,6 +184,8 @@ void Search::setImage(cv::Mat img)
     {
         cout << "clResult Buffer error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 
     // Create matches buffer
     clMatchIndex = clCreateBuffer(context,
@@ -195,6 +199,8 @@ void Search::setImage(cv::Mat img)
         cout << "clMatchIndex Buffer error: " << err << "\n";
     }
 
+    cout << "finish: " << clFinish(queue) << endl;
+
     // Create matches buffer
     clMatch = clCreateBuffer(context,
                              CL_MEM_WRITE_ONLY,
@@ -206,6 +212,8 @@ void Search::setImage(cv::Mat img)
         cout << "clMatch Buffer error: " << err << "\n";
     }
 
+    cout << "finish: " << clFinish(queue) << endl;
+
     // load image to device
     err = clEnqueueWriteBuffer(queue,
                                clImage,
@@ -220,6 +228,8 @@ void Search::setImage(cv::Mat img)
     {
         cout << "enqueueWriteBuffer image error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 
     // set matchIndex to 0
     matchesIndex = 0;
@@ -236,6 +246,8 @@ void Search::setImage(cv::Mat img)
     {
         cout << "enqueueWriteBuffer matchIndex error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 }
 
 // Excecutes the kernel
@@ -243,6 +255,8 @@ void Search::runProgram(cv::Mat img)
 {
     image = img;
 
+    cout << "buffer size: " << imageSize*sizeof(uchar) << endl;
+
     // load image to device
     err = clEnqueueWriteBuffer(queue,
                                clImage,
@@ -257,6 +271,8 @@ void Search::runProgram(cv::Mat img)
     {
         cout << "enqueueWriteBuffer image error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 
     // set matchIndex to 0
     matchesIndex = 0;
@@ -273,6 +289,8 @@ void Search::runProgram(cv::Mat img)
     {
         cout << "enqueueWriteBuffer matchIndex error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 
     if (VERBOSE)
     {
@@ -326,7 +344,8 @@ void Search::runProgram(cv::Mat img)
     {
         cout << "kernel arg 8 error: " << err << "\n";
     }
-//    CL_SUCCESS
+
+    cout << "finish: " << clFinish(queue) << endl;
 
     // Set local and global workgroup sizes
     size_t localws[2] = {256,1};
@@ -346,6 +365,8 @@ void Search::runProgram(cv::Mat img)
     {
         cout << "clEnqueueNDRangeKernel error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
 //    CL_SUCCESS
 
 //    clImage = clResult;  // allows the image to be processed multiiple times
@@ -374,6 +395,7 @@ void* Search::readOutput() {
     {
         cout << "enqueueReadImage error: " << err << "\n";
     }
+    cout << "finish: " << clFinish(queue) << endl;
 
     return newData;
 }
@@ -396,6 +418,8 @@ unsigned int* Search::readMatchesOutput(unsigned int numMatches)
         cout << "clMatch read buffer error: " << err << "\n";
     }
 
+    cout << "finish: " << clFinish(queue) << endl;
+
     return matches;
 }
 
@@ -416,6 +440,9 @@ int Search::readMatchesIndexOutput()
     {
         cout << "clMatchIndex read buffer error: " << err << "\n";
     }
+
+    cout << "finish: " << clFinish(queue) << endl;
+//    CL_SUCCESS
 
     return index;
 }
