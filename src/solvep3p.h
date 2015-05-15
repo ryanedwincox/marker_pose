@@ -54,6 +54,11 @@ private:
     double a0;
     double b1;
     double b0;
+
+    // solve for
+    double PA;
+    double PB;
+    double PC;
 };
 
 #endif // SOLVEP3P_H

@@ -89,6 +89,7 @@ void SolveP3P::solveP3PEquationSystem()
 
     double x = X[0];
 
+    // b1*y - b0 = 0
     b1 = b*pow(((pow(p,2)-p*q*r+pow(r,2))*a+(pow(p,2)-pow(r,2))*b-pow(p,2)+p*q*r-pow(r,2)),2);
     b0 = ((1-a-b)*pow(x,2)+(a-1)*q*x-a+b+1)*
             (pow(r,3)*(pow(a,2)+pow(b,2)-2*a-2*b+(2-pow(r,2))*a*b+1)*pow(x,3)+
@@ -99,9 +100,17 @@ void SolveP3P::solveP3PEquationSystem()
             (-2*q*pow(r,3)+p*pow(r,4)+2*pow(p,2)*q*r-2*pow(p,3))*b+(2*pow(p,3)+2*q*pow(r,3)-2*pow(p,2)*q*r)*a*b+
             p*pow(q,2)*pow(r,2)-2*pow(p,2)*q*r+2*p*pow(r,2)+pow(p,3)-2*pow(r,3)*q));
 
-
-
     cout << "b1: " << b1 << endl;
     cout << "b0: " << b0 << endl;
 
+    double y = b0/b1;
+
+    double v = pow(x,2) + pow(y,2) - 2*x*y*cos(uv);
+    PC = sqrt(pow(AB,2)/v);  // using v = AB2/PC2
+    PB = y*PC; // using y = PB/PC
+    PA = x*PC; // using x = PA/PC
+
+    cout << "PA: " << PA << endl;
+    cout << "PB: " << PB << endl;
+    cout << "PC: " << PC << endl;
 }
