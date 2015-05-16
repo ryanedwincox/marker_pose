@@ -1,8 +1,6 @@
-//#include <QApplication>
-//#include <CL/cl.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include "opencv2/calib3d/calib3d.hpp"
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <vector>
@@ -18,7 +16,6 @@
 #include "barcode.h"
 #include "combinations.h"
 #include "markermanager.h"
-//#include "/opt/ros/groovy/include/opencv2/video/tracking.hpp"
 
 // ROS includes
 #include <ros/ros.h>
@@ -33,8 +30,6 @@ void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv
 void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
 void comb(int N, int K);
-
-//CL_SUCCESS
 
 int main(int argc, char *argv[])
 {
@@ -58,7 +53,7 @@ int main(int argc, char *argv[])
 //    std::cout << fps << std::endl;
 
     // define kernel files
-    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
+    const char * findSSLClPath = "cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;

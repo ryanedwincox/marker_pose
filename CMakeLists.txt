@@ -57,16 +57,8 @@ set(SOURCE_FILES
 
 rosbuild_add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-#set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
-#rosbuild_add_library(${PROJECT_NAME} ${SOURCE_FILES})
-
 target_link_libraries(${PROJECT_NAME} OpenCL)
 
-
-#find_package(OpenCV)
-#include_directories(${OpenCV_INCLUDE_DIRS})
-#target_link_libraries(my_awesome_library ${OpenCV_LIBRARIES})
 
 
 
