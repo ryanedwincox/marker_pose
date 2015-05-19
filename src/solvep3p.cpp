@@ -5,11 +5,17 @@ SolveP3P::SolveP3P()
 
 }
 
-void SolveP3P::solveP3P(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs)
+void SolveP3P::solveP3P(cv::Mat imageCoord, cv::Mat worldCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs)
 {
     normalizeImagePoints(imageCoord, cameraMatrix, distCoeffs);
     setUpP3PEquationSystem();
-    solveP3PEquationSystem();
+    cv::Mat M = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    M = solveP3PEquationSystem();
+    cv::Mat tempWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    tempWorldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(0);
+    tempWorldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(1);
+    tempWorldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(2);
+    rigidTransform(tempWorldCoord,M);
 }
 
 // parameters:
@@ -47,9 +53,9 @@ void SolveP3P::normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv
 void SolveP3P::setUpP3PEquationSystem()
 {
     // calculate angles to points on image plane
-    cv::Point3f u = normalizedCoord.at<cv::Point3f>(0);
-    cv::Point3f v = normalizedCoord.at<cv::Point3f>(1);
-    cv::Point3f w = normalizedCoord.at<cv::Point3f>(2);
+    u = normalizedCoord.at<cv::Point3f>(0);
+    v = normalizedCoord.at<cv::Point3f>(1);
+    w = normalizedCoord.at<cv::Point3f>(2);
     uv = acos(u.x*v.x + u.y*v.y + u.z*v.z);
     uw = acos(u.x*w.x + u.y*w.y + u.z*w.z);
     vw = acos(v.x*w.x + v.y*w.y + v.z*w.z);
@@ -64,7 +70,7 @@ void SolveP3P::setUpP3PEquationSystem()
     b = (CA*CA) / (AB*AB);
 }
 
-void SolveP3P::solveP3PEquationSystem()
+cv::Mat SolveP3P::solveP3PEquationSystem()
 {
     // use Wu Ritt's zero composition to get coefficients a4, a3, a2, a1, a0, b1 and b0
     double p = 2*cos(vw);
@@ -77,15 +83,15 @@ void SolveP3P::solveP3PEquationSystem()
     a2 = (2+pow(q,2))*pow(a,2) + (pow(p,2)+pow(r,2)-2)*pow(b,2) - (4+2*pow(q,2))*a - (p*q*r+pow(p,2))*b - (p*q*r+pow(r,2))*a*b + pow(q,2) + 2;
     a1 = -2*q*pow(a,2) - r*p*pow(b,2) + 4*q*a + (p*r+q*pow(p,2)-2*q)*b + (r*p+2*q)*a*b - 2*q;
     a0 = pow(a,2)+pow(b,2) - 2*a + (2-pow(p,2))*b - 2*a*b + 1;
-    cout << "a4: " << a4 << endl;
-    cout << "a3: " << a3 << endl;
-    cout << "a2: " << a2 << endl;
-    cout << "a1: " << a1 << endl;
-    cout << "a0: " << a0 << endl;
+//    cout << "a4: " << a4 << endl;
+//    cout << "a3: " << a3 << endl;
+//    cout << "a2: " << a2 << endl;
+//    cout << "a1: " << a1 << endl;
+//    cout << "a0: " << a0 << endl;
 
     double X [4];
     int ret = SolveP4(X, a3/a4, a2/a4, a1/a4, a0/a4);
-    cout << "ret: " << ret << endl;
+//    cout << "ret: " << ret << endl;
 
     double x = X[0];
 
@@ -100,17 +106,126 @@ void SolveP3P::solveP3PEquationSystem()
             (-2*q*pow(r,3)+p*pow(r,4)+2*pow(p,2)*q*r-2*pow(p,3))*b+(2*pow(p,3)+2*q*pow(r,3)-2*pow(p,2)*q*r)*a*b+
             p*pow(q,2)*pow(r,2)-2*pow(p,2)*q*r+2*p*pow(r,2)+pow(p,3)-2*pow(r,3)*q));
 
-    cout << "b1: " << b1 << endl;
-    cout << "b0: " << b0 << endl;
+//    cout << "b1: " << b1 << endl;
+//    cout << "b0: " << b0 << endl;
 
     double y = b0/b1;
 
-    double v = pow(x,2) + pow(y,2) - 2*x*y*cos(uv);
-    PC = sqrt(pow(AB,2)/v);  // using v = AB2/PC2
+    double V = pow(x,2) + pow(y,2) - 2*x*y*cos(uv);
+    PC = sqrt(pow(AB,2)/V);  // using v = AB2/PC2
     PB = y*PC; // using y = PB/PC
     PA = x*PC; // using x = PA/PC
 
-    cout << "PA: " << PA << endl;
-    cout << "PB: " << PB << endl;
-    cout << "PC: " << PC << endl;
+//    cout << "PA: " << PA << endl;
+//    cout << "PB: " << PB << endl;
+//    cout << "PC: " << PC << endl;
+
+    // scale points to find estimated projected points
+    A.x = u.x * PA;
+    A.y = u.y * PA;
+    A.z = u.z * PA;
+    B.x = v.x * PB;
+    B.y = v.y * PB;
+    B.z = v.z * PB;
+    C.x = w.x * PC;
+    C.y = w.y * PC;
+    C.z = w.z * PC;
+
+    // ************
+    // Temp for testing rigidTransform
+    A = (cv::Point3f){1,1,1};
+    B = (cv::Point3f){1,3,1};
+    C = (cv::Point3f){3,3,1};
+    // ***********
+
+    // return vector of points
+    cv::Mat estimatedWorldPoints = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    estimatedWorldPoints.at<cv::Point3f>(0) = A;
+    estimatedWorldPoints.at<cv::Point3f>(1) = B;
+    estimatedWorldPoints.at<cv::Point3f>(2) = C;
+
+    return estimatedWorldPoints;
+}
+
+void SolveP3P::rigidTransform(cv::Mat N, cv::Mat M)
+{
+    // find centroid of n and m
+    float x = 0;
+    float y = 0;
+    float z = 0;
+    float  num = N.rows; // number of points, should be the same for both
+    cout << "rows: " << num << endl;
+    if (N.rows != M.rows)
+    {
+        cout << "Error: Number of elements should match" << endl;
+    }
+    for (int i = 0; i < num; i++)
+    {
+        x = x + N.at<cv::Point3f>(i).x;
+        y = y + N.at<cv::Point3f>(i).y;
+        z = z + N.at<cv::Point3f>(i).z;
+    }
+    cv::Mat nCenter = cv::Mat(3,1,cv::DataType<float>::type);
+    nCenter.at<float>(0) = x/num;
+    nCenter.at<float>(1) = y/num;
+    nCenter.at<float>(2) = z/num;
+    x = 0;
+    y = 0;
+    z = 0;
+    for (int i = 0; i < num; i++)
+    {
+        x = x + M.at<cv::Point3f>(i).x;
+        y = y + M.at<cv::Point3f>(i).y;
+        z = z + M.at<cv::Point3f>(i).z;
+    }
+    cv::Mat mCenter = cv::Mat(3,1,cv::DataType<float>::type);
+    mCenter.at<float>(0) = x/num;
+    mCenter.at<float>(1) = y/num;
+    mCenter.at<float>(2) = z/num;
+
+    cout << "nCenter: " << nCenter << endl;
+    cout << "mCenter: " << mCenter << endl;
+
+    // convert cv::Mat of Point3f to vector of cv::Mat for matrix manipulation
+    vector<cv::Mat> nTemp = vector<cv::Mat> (num);
+    vector<cv::Mat> mTemp = vector<cv::Mat> (num);
+    cv::Mat H = cv::Mat(3,3,cv::DataType<float>::type);
+    for (int i = 0; i < num; i++)
+    {
+        cv::Mat nMat = cv::Mat(3,1,cv::DataType<float>::type);
+        nMat.at<float>(0,0) = N.at<cv::Point3f>(i).x - nCenter.at<float>(0,0);
+        nMat.at<float>(1,0) = N.at<cv::Point3f>(i).y - nCenter.at<float>(0,1);
+        nMat.at<float>(2,0) = N.at<cv::Point3f>(i).z - nCenter.at<float>(0,2);
+        nTemp[i] = nMat;
+
+        cv::Mat mMat = cv::Mat(3,1,cv::DataType<float>::type);
+        cv::Mat mMatT = cv::Mat(1,3,cv::DataType<float>::type);
+        mMat.at<float>(0,0) = M.at<cv::Point3f>(i).x - mCenter.at<float>(0,0);
+        mMat.at<float>(1,0) = M.at<cv::Point3f>(i).y - mCenter.at<float>(0,1);
+        mMat.at<float>(2,0) = M.at<cv::Point3f>(i).z - mCenter.at<float>(0,2);
+        cv::transpose(mMat, mMatT);
+        mTemp[i] = mMatT;
+
+        cv::Mat h = cv::Mat(3,3,cv::DataType<cv::Point3f>::type);
+        h = nMat * mMatT;
+        cv::add(H,h,H);
+    }
+    cout << H << endl;
+
+    cv::Mat w, u, vt;
+    cv::SVD::compute(H,w,u,vt);
+    cv::Mat R = cv::Mat(3,3,cv::DataType<float>::type);
+    R = vt*u;
+
+    cv::Mat t;
+
+    cv::add(-R*nCenter, mCenter, t);
+
+    cout << "R: " << R << endl;
+    cout << "t: " << t << endl;
+
+    // TODO: use eigen to convert to T
+    // apply T to n should get m
+
+    // TODO: return T
 }

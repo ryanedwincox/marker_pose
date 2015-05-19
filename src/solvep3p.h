@@ -16,10 +16,11 @@ class SolveP3P
 {
 public:
     SolveP3P();
-    void solveP3P(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
+    void solveP3P(cv::Mat imageCoord, cv::Mat worldCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void setUpP3PEquationSystem();
-    void solveP3PEquationSystem();
+    cv::Mat solveP3PEquationSystem();
+    void rigidTransform(cv::Mat N, cv::Mat M);
 
 private:
     cv::Mat normalizedCoord;
@@ -31,6 +32,11 @@ private:
     double fy;
     double cx;
     double cy;
+
+    // points onimage plane
+    cv::Point3f u;
+    cv::Point3f v;
+    cv::Point3f w;
 
     // angles
     double uv;
@@ -59,6 +65,11 @@ private:
     double PA;
     double PB;
     double PC;
+
+    // Estimated 3D points
+    cv::Point3f A;
+    cv::Point3f B;
+    cv::Point3f C;
 };
 
 #endif // SOLVEP3P_H

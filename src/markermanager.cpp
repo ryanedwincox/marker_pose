@@ -256,7 +256,7 @@ Matrix4d MarkerManager::estimateWorldPose()
         cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
         // my own solve pnp function
-        poseEst.solveP3P(totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs);
+        poseEst.solveP3P(totalImageCoord, totalWorldCoord, barcode.cameraMatrix, barcode.distCoeffs);
 
 //        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
 //        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
