@@ -7,10 +7,12 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <math.h>
+#include <Eigen/Eigen>
 
 #include "poly34.h"
 
 using namespace std;
+using namespace Eigen;
 
 class SolveP3P
 {
@@ -20,7 +22,11 @@ public:
     void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void setUpP3PEquationSystem();
     cv::Mat solveP3PEquationSystem();
-    void rigidTransform(cv::Mat N, cv::Mat M);
+    Matrix4d rigidTransform(cv::Mat N, cv::Mat M);
+
+    // other functions
+    MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
+    cv::Mat eigenToCvMat(MatrixXd input, int rows, int cols);
 
 private:
     cv::Mat normalizedCoord;
@@ -49,8 +55,8 @@ private:
     double CA;
 
     // coefficients
-    double a;
-    double b;
+    double aa;
+    double bb;
 
     // Wu Ritt's coefficients
     double a4;
@@ -67,9 +73,9 @@ private:
     double PC;
 
     // Estimated 3D points
-    cv::Point3f A;
-    cv::Point3f B;
-    cv::Point3f C;
+    cv::Point3f AA;
+    cv::Point3f BB;
+    cv::Point3f CC;
 };
 
 #endif // SOLVEP3P_H

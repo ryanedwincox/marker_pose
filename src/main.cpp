@@ -114,6 +114,9 @@ int main(int argc, char *argv[])
     int numMarkers = 2;
     MarkerManager markerManager(numMarkers, barcode);
 
+    // Temp **********
+    SolveP3P solveP3P;
+
     while (cap.isOpened())
     {
         cap >> img;
@@ -233,6 +236,16 @@ int main(int argc, char *argv[])
             publishTF(camTf, "marker_origin", "camera");
         }
 
+        cv::Mat N = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+        N.at<cv::Point3f>(0) = (cv::Point3f){0,1,0};
+        N.at<cv::Point3f>(1) = (cv::Point3f){0,0,0};
+        N.at<cv::Point3f>(2) = (cv::Point3f){1,0,0};
+        cv::Mat M = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+        M.at<cv::Point3f>(0) = (cv::Point3f){1.5,1.5,-1.5};
+        M.at<cv::Point3f>(1) = (cv::Point3f){1,1,0};
+        M.at<cv::Point3f>(2) = (cv::Point3f){2,1,0};
+        Matrix4d test = solveP3P.rigidTransform(N, M);
+        publishTF(test, "world", "test_frame");
 
         // Display images
         cv::imshow("Binary Image", imgBin);

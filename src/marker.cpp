@@ -26,8 +26,6 @@ Marker::Marker()
 
     // Define 3D coordinates of markers
     worldCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point3f>::type);
-    // rectangle marker pattern
-
 
     // Define 2D corrdinates of markers detected in image
     imageCoord = cv::Mat(numMarkers,1,cv::DataType<cv::Point2f>::type);
