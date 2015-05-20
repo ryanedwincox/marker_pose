@@ -18,7 +18,7 @@ class SolveP3P
 {
 public:
     SolveP3P();
-    void solveP3P(cv::Mat imageCoord, cv::Mat worldCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
+    Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec);
     void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void setUpP3PEquationSystem();
     cv::Mat solveP3PEquationSystem();
@@ -27,6 +27,8 @@ public:
     // other functions
     MatrixXd cvMatToEigen(cv::Mat input, int rows, int cols);
     cv::Mat eigenToCvMat(MatrixXd input, int rows, int cols);
+    cv::Mat rvecFromT(Matrix4d T);
+    cv::Mat tvecFromT(Matrix4d T);
 
 private:
     cv::Mat normalizedCoord;

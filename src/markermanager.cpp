@@ -97,7 +97,7 @@ void MarkerManager::clusterTargetInputs(vector<HoldPoint> H)
                 cluster = findTargetCluster();
 
                 drawTargets(cluster, cv::Scalar(255,0+(255/(numMatches/4))*i,0));  // temporary ****************
-                std::vector<HoldPoint> clusterSorted = markers.at(i).sortPointsVertically(cluster);
+                vector<HoldPoint> clusterSorted = markers.at(i).sortPointsVertically(cluster);
 
                 markers.at(i).foundMarkers = clusterSorted.size();
                 markers.at(i).setImageCoord(clusterSorted);
@@ -252,14 +252,16 @@ Matrix4d MarkerManager::estimateWorldPose()
         int flags = cv::ITERATIVE;
         bool useExtrinsicGuess = false;
 
-        // use opencv solve pnp function
-        cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+//        // use opencv solve pnp function
+//        cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
         // my own solve pnp function
-        poseEst.solveP3P(totalImageCoord, totalWorldCoord, barcode.cameraMatrix, barcode.distCoeffs);
+        Matrix4d T = poseEst.solveP3P(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec);
+        rvec = poseEst.rvecFromT(T);
+        tvec = poseEst.tvecFromT(T);
 
-//        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
-//        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
+        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
+        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
 //        std::cout << "rvec: " << rvec << std::endl;
 //        std::cout << "tvec: " << tvec << std::endl;
 
@@ -278,7 +280,7 @@ Matrix4d MarkerManager::estimateWorldPose()
 
         cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
         cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
-        cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,0,0), 2);
+        cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,255,0), 2);
     }
     else
     {

@@ -5,18 +5,41 @@ SolveP3P::SolveP3P()
 
 }
 
-void SolveP3P::solveP3P(cv::Mat imageCoord, cv::Mat worldCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs)
+Matrix4d SolveP3P::solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec)
 {
-//    normalizeImagePoints(imageCoord, cameraMatrix, distCoeffs);
-//    setUpP3PEquationSystem();
-//    cv::Mat M = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
-//    M = solveP3PEquationSystem();
-//    cv::Mat tempWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
-//    tempWorldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(0);
-//    tempWorldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(1);
-//    tempWorldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(2);
-//    Matrix4d T = rigidTransform(tempWorldCoord,M);
-//    cout << "T: " << T << endl;
+    // only use three image coord, and the forth for finding the best solution
+    cv::Mat threeImageCoord = cv::Mat(3,1,cv::DataType<cv::Point2f>::type);
+    threeImageCoord.at<cv::Point2f>(0) = imageCoord.at<cv::Point2f>(0);
+    threeImageCoord.at<cv::Point2f>(1) = imageCoord.at<cv::Point2f>(1);
+    threeImageCoord.at<cv::Point2f>(2) = imageCoord.at<cv::Point2f>(2);
+//    threeImageCoord.at<cv::Point2f>(0) = (cv::Point2f){200,200};
+//    threeImageCoord.at<cv::Point2f>(1) = (cv::Point2f){200,300};
+//    threeImageCoord.at<cv::Point2f>(2) = (cv::Point2f){300,300};
+
+    normalizeImagePoints(threeImageCoord, cameraMatrix, distCoeffs);
+    setUpP3PEquationSystem();
+
+    cv::Mat estimatedWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    estimatedWorldCoord = solveP3PEquationSystem();
+    cout << "estimatedWorldCoord: " << estimatedWorldCoord << endl;
+
+    // only use three world coord, and the forth for finding the best solution
+    cv::Mat threeWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
+    threeWorldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(0);
+    threeWorldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(1);
+    threeWorldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(2);
+//    threeWorldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0.1,0};
+//    threeWorldCoord.at<cv::Point3f>(1) = (cv::Point3f){0,0,0};
+//    threeWorldCoord.at<cv::Point3f>(2) = (cv::Point3f){0.1,0,0};
+//    cout << "3worldCoord: " << threeWorldCoord << endl;
+
+    Matrix4d T = rigidTransform(threeWorldCoord, estimatedWorldCoord);
+
+    cout << "T: " << T << endl;
+    rvec = rvecFromT(T);
+    tvec = tvecFromT(T);
+
+    return T;
 }
 
 // parameters:
@@ -47,6 +70,7 @@ void SolveP3P::normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv
         normalizedCoord.at<cv::Point3f>(i).y = (float) y / N;
         normalizedCoord.at<cv::Point3f>(i).z = (float) z / N;
 
+//        cout << "ImageCoord: " << imageCoord.at<cv::Point2f>(i).x << ", " << imageCoord.at<cv::Point2f>(i).y << endl;
 //        cout << "normalizedCoord: " << normalizedCoord.at<cv::Point3f>(i).x << ", " << normalizedCoord.at<cv::Point3f>(i).y << ", " << normalizedCoord.at<cv::Point3f>(i).z << endl;
     }
 }
@@ -92,7 +116,7 @@ cv::Mat SolveP3P::solveP3PEquationSystem()
 
     double X [4];
     int ret = SolveP4(X, a3/a4, a2/a4, a1/a4, a0/a4);
-//    cout << "ret: " << ret << endl;
+    cout << "ret: " << ret << endl;
 
     double x = X[0];
 
@@ -117,9 +141,13 @@ cv::Mat SolveP3P::solveP3PEquationSystem()
     PB = y*PC; // using y = PB/PC
     PA = x*PC; // using x = PA/PC
 
-//    cout << "PA: " << PA << endl;
-//    cout << "PB: " << PB << endl;
-//    cout << "PC: " << PC << endl;
+    PC = 0.51;
+    PB = 0.5;
+    PA = 0.51;
+
+    cout << "PA: " << PA << endl;
+    cout << "PB: " << PB << endl;
+    cout << "PC: " << PC << endl;
 
     // scale points to find estimated projected points
     AA.x = u.x * PA;
@@ -132,12 +160,10 @@ cv::Mat SolveP3P::solveP3PEquationSystem()
     CC.y = w.y * PC;
     CC.z = w.z * PC;
 
-    // ************
-    // Temp for testing rigidTransform
-    AA = (cv::Point3f){1,1,1};
-    BB = (cv::Point3f){1,3,1};
-    CC = (cv::Point3f){3,3,1};
-    // ***********
+    cout << "estimated world coord:" << endl;
+    cout << "AA: " << AA << endl;
+    cout << "BB: " << BB << endl;
+    cout << "CC: " << CC << endl;
 
     // return vector of points
     cv::Mat estimatedWorldPoints = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
@@ -243,9 +269,9 @@ Matrix4d SolveP3P::rigidTransform(cv::Mat N, cv::Mat M)
         R.at<float>(2,2) = -R.at<float>(2,2);
     }
 
-    cout << "vT: " << vT << endl;
-    cout << "u: " << u << endl;
-    cout << "uT: " << uT << endl;
+//    cout << "vT: " << vT << endl;
+//    cout << "u: " << u << endl;
+//    cout << "uT: " << uT << endl;
 
     cv::Mat t;
     cv::add(-R*nCenter, mCenter, t);
@@ -263,7 +289,7 @@ Matrix4d SolveP3P::rigidTransform(cv::Mat N, cv::Mat M)
     Tmat.topRightCorner(3,1) = tVec;
     Tmat.bottomLeftCorner(1,4) << 0,0,0,1;
 
-    cout << "Tmat: " << Tmat << endl;
+//    cout << "Tmat: " << Tmat << endl;
 
     cv::Mat T = cv::Mat(3,3,cv::DataType<double>::type);
     T = eigenToCvMat(Tmat,4,4);
@@ -271,6 +297,7 @@ Matrix4d SolveP3P::rigidTransform(cv::Mat N, cv::Mat M)
     return Tmat;
 }
 
+// careful this takes cv::Mat of floats
 MatrixXd SolveP3P::cvMatToEigen(cv::Mat input, int rows, int cols)
 {
     MatrixXd output(rows, cols);
@@ -295,6 +322,28 @@ cv::Mat SolveP3P::eigenToCvMat(MatrixXd input, int rows, int cols)
         }
     }
     return output;
+}
+
+cv::Mat SolveP3P::rvecFromT(Matrix4d T)
+{
+    MatrixXd R(3,3);
+    R = T.topLeftCorner(3,3);
+    cv::Mat rmat = cv::Mat(3,3,cv::DataType<double>::type);
+    rmat = eigenToCvMat(R,3,3);
+    cv::Mat rvec = cv::Mat(3,1,cv::DataType<double>::type);
+    cv::Rodrigues(rmat, rvec);
+
+    return rvec;
+}
+
+cv::Mat SolveP3P::tvecFromT(Matrix4d T)
+{
+    MatrixXd t(3,1);
+    t = T.topRightCorner(3,1);
+    cv::Mat tvec = cv::Mat(3,1,cv::DataType<double>::type);
+    tvec = eigenToCvMat(t,3,1);
+
+    return tvec;
 }
 
 

@@ -36,6 +36,8 @@ Marker::Marker()
     enoughMarkers = false;
 
     imgCoordOrientation = -1;
+
+    poseest = SolveP3P();
 }
 
 void Marker::setWorldCoord()
@@ -150,6 +152,7 @@ cv::Mat Marker::getImageCoord(int orientation)
     }
     else
     {
+        std::cout << "Orientation: " << orientation << std::endl;
         std::cout << "error: requested invalid image coordinate orientation" << std::endl;
     }
 //    return imageCoordVec.at(orientation);
@@ -170,7 +173,13 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
     // Iterate through both possible orientations
     for (int i = 0; i < numOrientations; i++)
     {
+        // use openCV built in solve PnP
         cv::solvePnP(getWorldCoord(), getImageCoord(i), barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
+
+//        std::cout << "getImateCoord: " << getImageCoord(i) << std::endl;
+
+//        // my own solve pnp function
+//        poseest.solveP3P(getWorldCoord(), getImageCoord(i), barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec);
 
         // if rvec and tvec != 0
         if (!markerTransformationZero())
@@ -201,7 +210,7 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
     {
         std::cout << "no marker found" << std::endl;
 
-        // reset rvec and tvec
+//        // reset rvec and tvec
         rvec.at<double>(0) = 0;
         rvec.at<double>(1) = 0;
         rvec.at<double>(2) = 0;

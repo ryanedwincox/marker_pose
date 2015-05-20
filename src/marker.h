@@ -67,6 +67,7 @@ private:
     std::vector<cv::Point2f> projectedAxis;
     std::vector<cv::Point2f> projectedGrid;
     std::vector<cv::Mat> imageCoordVec;
+    SolveP3P poseest;
 
 };
 
