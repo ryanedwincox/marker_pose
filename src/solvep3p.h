@@ -24,7 +24,7 @@ public:
     SolveP3P();
     Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec);
     void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
-    void setUpP3PEquationSystem();
+    void setUpP3PEquationSystem(cv::Mat threeWorldCoord);
     cv::Mat solveP3PEquationSystem();
     Matrix4d rigidTransform(cv::Mat N, cv::Mat M);
 
