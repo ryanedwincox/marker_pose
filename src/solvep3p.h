@@ -1,3 +1,7 @@
+//*********
+// Tutorial link: http://iplimage.com/blog/p3p-perspective-point-overview/
+//*********
+
 #ifndef SOLVEP3P_H
 #define SOLVEP3P_H
 

@@ -46,8 +46,8 @@ int main(int argc, char *argv[])
         std::cout << "camera not found" << std::endl;
         return -1;
     }
-    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1080);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 //    cap.set(CV_CAP_PROP_FPS,30);
 
 //    double fps=cap.get(CV_CAP_PROP_FPS);

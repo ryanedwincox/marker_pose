@@ -12,30 +12,30 @@ Matrix4d SolveP3P::solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat came
     threeImageCoord.at<cv::Point2f>(0) = imageCoord.at<cv::Point2f>(0);
     threeImageCoord.at<cv::Point2f>(1) = imageCoord.at<cv::Point2f>(1);
     threeImageCoord.at<cv::Point2f>(2) = imageCoord.at<cv::Point2f>(2);
-//    threeImageCoord.at<cv::Point2f>(0) = (cv::Point2f){200,200};
-//    threeImageCoord.at<cv::Point2f>(1) = (cv::Point2f){200,300};
-//    threeImageCoord.at<cv::Point2f>(2) = (cv::Point2f){300,300};
+//    threeImageCoord.at<cv::Point2f>(0) = (cv::Point2f){270,153};
+//    threeImageCoord.at<cv::Point2f>(1) = (cv::Point2f){320,240};
+//    threeImageCoord.at<cv::Point2f>(2) = (cv::Point2f){420,240};
 
     normalizeImagePoints(threeImageCoord, cameraMatrix, distCoeffs);
     setUpP3PEquationSystem();
 
     cv::Mat estimatedWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
     estimatedWorldCoord = solveP3PEquationSystem();
-    cout << "estimatedWorldCoord: " << estimatedWorldCoord << endl;
+//    cout << "estimatedWorldCoord: " << estimatedWorldCoord << endl;
 
     // only use three world coord, and the forth for finding the best solution
     cv::Mat threeWorldCoord = cv::Mat(3,1,cv::DataType<cv::Point3f>::type);
     threeWorldCoord.at<cv::Point3f>(0) = worldCoord.at<cv::Point3f>(0);
     threeWorldCoord.at<cv::Point3f>(1) = worldCoord.at<cv::Point3f>(1);
     threeWorldCoord.at<cv::Point3f>(2) = worldCoord.at<cv::Point3f>(2);
-//    threeWorldCoord.at<cv::Point3f>(0) = (cv::Point3f){0,0.1,0};
+//    threeWorldCoord.at<cv::Point3f>(0) = (cv::Point3f){-0.05,0.0866,0};
 //    threeWorldCoord.at<cv::Point3f>(1) = (cv::Point3f){0,0,0};
 //    threeWorldCoord.at<cv::Point3f>(2) = (cv::Point3f){0.1,0,0};
 //    cout << "3worldCoord: " << threeWorldCoord << endl;
 
     Matrix4d T = rigidTransform(threeWorldCoord, estimatedWorldCoord);
 
-    cout << "T: " << T << endl;
+//    cout << "T: " << T << endl;
     rvec = rvecFromT(T);
     tvec = tvecFromT(T);
 
@@ -85,14 +85,21 @@ void SolveP3P::setUpP3PEquationSystem()
     uw = acos(u.x*w.x + u.y*w.y + u.z*w.z);
     vw = acos(v.x*w.x + v.y*w.y + v.z*w.z);
 
+    cout << "angles: " << uv << ", " << uw << ", " << vw << endl;
+
     // calculate distances AB, BC, and CA
+    // These are actually distances uv vw wu but aa and bb below are only the ratio so it doesn't matter
     AB = sqrt((v.x-u.x)*(v.x-u.x)+(v.y-u.y)*(v.y-u.y)+(v.z-u.z)*(v.z-u.z));
     BC = sqrt((w.x-v.x)*(w.x-v.x)+(w.y-v.y)*(w.y-v.y)+(w.z-v.z)*(w.z-v.z));
     CA = sqrt((w.x-u.x)*(w.x-u.x)+(w.y-u.y)*(w.y-u.y)+(w.z-u.z)*(w.z-u.z));
 
+    cout << "unit distances AB, BC, CA: " << AB << ", " << BC << ", " << CA << endl;
+
     //calculate coefficients
     aa = (BC*BC) / (AB*AB);
     bb = (CA*CA) / (AB*AB);
+
+    cout << "aa bb : " << aa << ", " << bb << endl;
 }
 
 cv::Mat SolveP3P::solveP3PEquationSystem()
@@ -102,23 +109,39 @@ cv::Mat SolveP3P::solveP3PEquationSystem()
     double q = 2*cos(uw);
     double r = 2*cos(uv);
 
+    cout << "pqr: " << p << ", " << q << ", " << r << endl;
+
     // a4*x^4+a3*x^3+a2*x^2+a1*x^1+a0=0
     a4 = pow(aa,2) + pow(bb,2) - 2*aa - 2*bb + 2*(1-pow(r,2))*bb*aa + 1;
     a3 = -2*q*pow(aa,2) - r*p*pow(bb,2) + 4*q*aa + (2*q+p*r)*bb + (pow(r,2)*q-2*q+r*p)*aa*bb - 2*q;
     a2 = (2+pow(q,2))*pow(aa,2) + (pow(p,2)+pow(r,2)-2)*pow(bb,2) - (4+2*pow(q,2))*aa - (p*q*r+pow(p,2))*bb - (p*q*r+pow(r,2))*aa*bb + pow(q,2) + 2;
     a1 = -2*q*pow(aa,2) - r*p*pow(bb,2) + 4*q*aa + (p*r+q*pow(p,2)-2*q)*bb + (r*p+2*q)*aa*bb - 2*q;
     a0 = pow(aa,2)+pow(bb,2) - 2*aa + (2-pow(p,2))*bb - 2*aa*bb + 1;
-//    cout << "a4: " << a_4 << endl;
-//    cout << "a3: " << a_3 << endl;
-//    cout << "a2: " << a_2 << endl;
-//    cout << "a1: " << a_1 << endl;
-//    cout << "a0: " << a_0 << endl;
+    cout << "a4: " << a4 << endl;
+    cout << "a3: " << a3 << endl;
+    cout << "a2: " << a2 << endl;
+    cout << "a1: " << a1 << endl;
+    cout << "a0: " << a0 << endl;
+
+    a4 = -2*bb + pow(bb,2) + pow(aa,2) + 1 - bb*pow(r,2)*aa +  2*bb*aa - 2*aa;
+    a3 = -2*bb*q*aa - 2*pow(aa,2)*q + bb*pow(r,2)*q*aa - 2*q + 2*bb*q + 4*aa*q + p*bb*r + bb*r*p*aa - pow(bb,2)*r*p;
+    a2 = pow(q,2) + pow(bb,2)*pow(r,2) - bb*pow(p,2) - q*p*bb*r + pow(bb,2)*pow(p,2) - bb*pow(r,2)*aa +
+            2 - 2*pow(bb,2) - aa*bb*r*p*q + 2*pow(aa,2) - 4*aa - 2*pow(q,2)*aa + pow(q,2)*pow(aa,2);
+    a1 = -pow(bb,2)*r*p + bb*r*p*aa - 2*pow(aa,2)*q + q*pow(p,2)*bb + 2*bb*q*aa + 4*aa*q + p*bb*r - 2*bb*q - 2*q;
+    a0 = 1 - 2*aa + 2*bb + pow(bb,2) - bb*pow(p,2) + pow(aa,2) - 2*bb*aa;
+    cout << "a4: " << a4 << endl;
+    cout << "a3: " << a3 << endl;
+    cout << "a2: " << a2 << endl;
+    cout << "a1: " << a1 << endl;
+    cout << "a0: " << a0 << endl;
 
     double X [4];
     int ret = SolveP4(X, a3/a4, a2/a4, a1/a4, a0/a4);
     cout << "ret: " << ret << endl;
+    cout << "X: " << X[0] << ", " << X[1] << ", " << X[2] << ", " << X[3] << endl;
 
     double x = X[0];
+//    x = 1;
 
     // b1*y - b0 = 0
     b1 = bb*pow(((pow(p,2)-p*q*r+pow(r,2))*aa+(pow(p,2)-pow(r,2))*bb-pow(p,2)+p*q*r-pow(r,2)),2);
@@ -131,19 +154,36 @@ cv::Mat SolveP3P::solveP3PEquationSystem()
             (-2*q*pow(r,3)+p*pow(r,4)+2*pow(p,2)*q*r-2*pow(p,3))*bb+(2*pow(p,3)+2*q*pow(r,3)-2*pow(p,2)*q*r)*aa*bb+
             p*pow(q,2)*pow(r,2)-2*pow(p,2)*q*r+2*p*pow(r,2)+pow(p,3)-2*pow(r,3)*q));
 
-//    cout << "b1: " << b1 << endl;
-//    cout << "b0: " << b0 << endl;
+    cout << "b1: " << b1 << endl;
+    cout << "b0: " << b0 << endl;
+
+    b1 = bb*pow((pow(p,2)*aa - pow(p,2) + bb*pow(p,2) + p*q*r - q*aa*r*p + aa*pow(r,2) - pow(r,2) - bb*pow(r,2)),2);
+    b0 = ((1-aa-bb)*pow(x,2) + (q*aa-q)*x + 1 - aa + bb)*((pow(aa,2)*pow(r,3) + 2*bb*pow(r,3)*aa - bb*pow(r,5)*aa - 2*aa*pow(r,3) + pow(r,3) + pow(bb,2)*pow(r,3) - 2*pow(r,3)*bb)*pow(x,3) +
+            (p*pow(r,2) + p*pow(aa,2)*pow(r,2) - 2*bb*pow(r,3)*q*aa + 2*pow(r,3)*bb*q + 2*pow(r,3)*q - 2*p*aa*pow(r,2) - 2*p*pow(r,2)*bb + pow(r,4)*p*bb + 4*aa*pow(r,3)*q + bb*q*aa*pow(r,5) - 2*pow(r,3)*pow(aa,2)*q +
+             2*pow(r,2)*p*bb*aa + pow(bb,2)*pow(r,2)*p - pow(r,4)*p*pow(bb,2))*pow(x,2) + (pow(r,3)*pow(q,2) + pow(r,5)*pow(bb,2) + r*pow(p,2)*pow(bb,2) - 4*aa*pow(r,3) - 2*aa*pow(r,3)*pow(q,2) + pow(r,3)*pow(q,2)*pow(aa,2) +
+             2*pow(aa,2)*pow(r,3) - 2*pow(bb,2)*pow(r,3) - 2*pow(p,2)*bb*r + 4*p*aa*pow(r,2)*q + 2*aa*pow(p,2)*r*bb - 2*aa*pow(r,2)*q*bb*p - 2*pow(p,2)*aa*r + r*pow(p,2) - bb*pow(r,5)*aa + 2*p*pow(r,2)*bb*q +
+             r*pow(p,2)*pow(aa,2) - 2*p*q*pow(r,2) + 2*pow(r,3) - 2*pow(r,2)*p*pow(aa,2)*q - pow(r,4)*q*bb*p)*x + 4*aa*pow(r,3)*q + p*pow(r,2)*pow(q,2) + 2*pow(p,3)*bb*aa - 4*p*aa*pow(r,2) +
+             -2*pow(r,3)*bb*q - 2*pow(p,2)*q*r - 2*pow(bb,2)*pow(r,2)*p + pow(r,4)*p*bb + 2*p*pow(aa,2)*pow(r,2) - 2*pow(r,3)*pow(aa,2)*q - 2*pow(p,3)*aa + pow(p,3)*pow(aa,2) + 2+p+pow(r,2) + pow(p,3) + 2*bb*pow(r,3)*q*aa +
+             2*q*pow(p,2)*bb*r + 4*q*aa*r*pow(p,2) - 2*p*aa*pow(r,2)*pow(q,2) - 2*pow(p,2)*pow(aa,2)*r*q + p*pow(aa,2)*pow(r,2)*pow(q,2) - 2*pow(r,3)*q - 2*pow(p,3)*bb + pow(p,3)*pow(bb,2) - 2*pow(p,2)*bb*r*q*aa);
+
+    cout << "b1: " << b1 << endl;
+    cout << "b0: " << b0 << endl;
 
     double y = b0/b1;
+    y = 0.98;
+
+    cout << "y: " << y << endl;
 
     double V = pow(x,2) + pow(y,2) - 2*x*y*cos(uv);
-    PC = sqrt(pow(AB,2)/V);  // using v = AB2/PC2
+//    PC = sqrt(pow(AB,2)/V);  // using v = AB2/PC2
+    double markerSpacing = 0.105;
+    PC = sqrt(pow(markerSpacing,2)/V);  // using v = AB2/PC2
     PB = y*PC; // using y = PB/PC
     PA = x*PC; // using x = PA/PC
 
-    PC = 0.51;
-    PB = 0.5;
-    PA = 0.51;
+//    PC = 0.51;
+//    PB = 0.5;
+//    PA = 0.51;
 
     cout << "PA: " << PA << endl;
     cout << "PB: " << PB << endl;

@@ -260,8 +260,8 @@ Matrix4d MarkerManager::estimateWorldPose()
         rvec = poseEst.rvecFromT(T);
         tvec = poseEst.tvecFromT(T);
 
-        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
-        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
+//        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
+//        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
 //        std::cout << "rvec: " << rvec << std::endl;
 //        std::cout << "tvec: " << tvec << std::endl;
 
