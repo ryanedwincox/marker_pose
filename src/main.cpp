@@ -16,11 +16,15 @@
 #include "barcode.h"
 #include "combinations.h"
 #include "markermanager.h"
+#include "imageconverter.h"
 
 // ROS includes
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <turtlesim/Pose.h>
+//#include <image_transport/image_transport.h>
+//#include <cv_bridge/cv_bridge.h>
+//#include <sensor_msgs/image_encodings.h>
 
 // declare local methods
 std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
@@ -33,19 +37,24 @@ void comb(int N, int K);
 
 int main(int argc, char *argv[])
 {
-    //Create video capture object
-    int cameraNum = 0;
-//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
-    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
-    cv::VideoCapture cap(cameraNum);
-    if(!cap.isOpened())  // check if we succeeded
-    {
-        std::cout << "camera not found" << std::endl;
-        return -1;
-    }
+//    ros::init(argc, argv, "image_converter");
+//    ImageConverter ic;
+//    ros::spin();
+//    return 0 ;
 
-    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
+//    //Create video capture object
+//    int cameraNum = 0;
+////    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
+//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
+//    cv::VideoCapture cap(cameraNum);
+//    if(!cap.isOpened())  // check if we succeeded
+//    {
+//        std::cout << "camera not found" << std::endl;
+//        return -1;
+//    }
+
+//    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+//    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
 
 //    cap.set(CV_CAP_PROP_FPS,30);
 
@@ -53,7 +62,8 @@ int main(int argc, char *argv[])
 //    std::cout << fps << std::endl;
 
     // define kernel files
-    const char * findSSLClPath = "cl/findSSL.cl";
+//    const char * findSSLClPath = "cl/findSSL.cl";
+    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;
@@ -90,15 +100,18 @@ int main(int argc, char *argv[])
     distCoeffs.at<double>(1) = 0.03747;
     distCoeffs.at<double>(2) = 0.0026472;
     distCoeffs.at<double>(3) = 0.00422;
-    distCoeffs.at<double>(4) = -0.4924;  
+    distCoeffs.at<double>(4) = -0.4924;
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 
     ros::NodeHandle nh;
     //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
+    ImageConverter ic;
+
     cv::Mat img;
-    cap >> img;
+//    cap >> img;
+//    img = ic.getImage();
 
     int w = img.cols;
     int h = img.rows;
@@ -109,10 +122,12 @@ int main(int argc, char *argv[])
     int numMarkers = 2;
     MarkerManager markerManager(numMarkers, barcode);
 
-    while (cap.isOpened())
+//    while (cap.isOpened())
+    while (ros::ok())
     {
-        cap.read(img);
-
+        ros::spinOnce();
+//        cap.read(img);
+        img = ic.getImage();
 
         if (VERBOSE)
         {
@@ -232,6 +247,8 @@ int main(int argc, char *argv[])
         cv::imshow("Binary Image", imgBin);
 
         cv::imshow("Original Image", img);
+
+//        ic.publishImage(img);
 
         // keep window open until any key is pressed
 //        if(cv::waitKey(150) >= 0) break; // for recorded video

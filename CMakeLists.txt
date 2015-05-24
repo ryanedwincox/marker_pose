@@ -46,6 +46,8 @@ set(SOURCE_FILES
     src/holdpoint.h
     src/search.cpp
     src/search.h
+    src/imageconverter.cpp
+    src/imageconverter.h
 #    src/combinations.cpp
 #    src/combinations.h
 #    src/kalman.cpp

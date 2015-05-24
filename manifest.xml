@@ -13,6 +13,8 @@
   <depend package="cv_bridge"/>
   <depend package="tf"/>
   <depend package="rviz"/>
+  <depend package="image_transport"/>
+  <depend package="sensor_msgs"/>
 
 </package>
 
