@@ -108,10 +108,11 @@ int main(int argc, char *argv[])
     //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
     ImageConverter ic;
-
     cv::Mat img;
 //    cap >> img;
-//    img = ic.getImage();
+    ros::spinOnce();
+    img = ic.getImage();
+    ros::spinOnce();
 
     int w = img.cols;
     int h = img.rows;
@@ -253,6 +254,7 @@ int main(int argc, char *argv[])
         // keep window open until any key is pressed
 //        if(cv::waitKey(150) >= 0) break; // for recorded video
         if(cv::waitKey(1) >= 0) break; // from USB cam
+
     }
 }
 

@@ -15,6 +15,7 @@ class ImageConverter
 public:
     ImageConverter();
     ~ImageConverter();
+    void subscribe();
     void imageCb(const sensor_msgs::ImageConstPtr& msg);
     cv::Mat getImage();
 private:

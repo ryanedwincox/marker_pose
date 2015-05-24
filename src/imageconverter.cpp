@@ -3,11 +3,18 @@
 ImageConverter::ImageConverter()
 : it_(nh_)
 {
+
     // Subscrive to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/usb_cam/image_raw", 1, &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
 
     cv::namedWindow(OPENCV_WINDOW);
+}
+void ImageConverter::subscribe()
+{
+    // Subscrive to input video feed and publish output video feed
+//    image_sub_ = it_.subscribe("/usb_cam/image_raw", 1, &ImageConverter::imageCb, this);
+//    image_pub_ = it_.advertise("/image_converter/output_video", 1);
 }
 
 void ImageConverter::imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -41,10 +48,10 @@ cv::Mat ImageConverter::getImage()
 }
 
 // TODO publish processed image
-//  void publishImage(cv::Mat img)
-//  {
-//      image_pub_.publish(cv_bridge::toImageMsg(img));
-//  }
+//void ImageConverter::publishImage(cv::Mat img)
+//{
+//    image_pub_.publish(cv_bridge::toImageMsg(img));
+//}
 
 ImageConverter::~ImageConverter()
 {
