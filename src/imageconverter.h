@@ -8,16 +8,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-static const std::string OPENCV_WINDOW = "Image window";
-
 class ImageConverter
 {
 public:
     ImageConverter();
     ~ImageConverter();
-    void subscribe();
     void imageCb(const sensor_msgs::ImageConstPtr& msg);
     cv::Mat getImage();
+    void publishImage(cv::Mat img);
 private:
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;
@@ -25,6 +23,7 @@ private:
     image_transport::Publisher image_pub_;
 
     cv_bridge::CvImagePtr cv_ptr;
+    cv_bridge::CvImagePtr cv_ptr_output;
 };
 
 #endif // IMAGECONVERTER_H

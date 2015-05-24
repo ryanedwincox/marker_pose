@@ -22,9 +22,6 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <turtlesim/Pose.h>
-//#include <image_transport/image_transport.h>
-//#include <cv_bridge/cv_bridge.h>
-//#include <sensor_msgs/image_encodings.h>
 
 // declare local methods
 std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
@@ -37,30 +34,6 @@ void comb(int N, int K);
 
 int main(int argc, char *argv[])
 {
-//    ros::init(argc, argv, "image_converter");
-//    ImageConverter ic;
-//    ros::spin();
-//    return 0 ;
-
-//    //Create video capture object
-//    int cameraNum = 0;
-////    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/Portage Bay Marker Test 4 27 15.avi";
-//    const char* filename = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/Video/PortageBayMarkerDD.avi";
-//    cv::VideoCapture cap(cameraNum);
-//    if(!cap.isOpened())  // check if we succeeded
-//    {
-//        std::cout << "camera not found" << std::endl;
-//        return -1;
-//    }
-
-//    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-//    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 960);
-
-//    cap.set(CV_CAP_PROP_FPS,30);
-
-//    double fps=cap.get(CV_CAP_PROP_FPS);
-//    std::cout << fps << std::endl;
-
     // define kernel files
 //    const char * findSSLClPath = "cl/findSSL.cl";
     const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
@@ -85,31 +58,29 @@ int main(int argc, char *argv[])
 
     // Camera matrices from camera calibration
     cv::Mat cameraMatrix(3,3,cv::DataType<double>::type);
-    cameraMatrix.at<double>(0,0) = 644.50;
+    cameraMatrix.at<double>(0,0) = 619.146082;
     cameraMatrix.at<double>(0,1) = 0;
-    cameraMatrix.at<double>(0,2) = 339.18;
+    cameraMatrix.at<double>(0,2) = 335.052170;
     cameraMatrix.at<double>(1,0) = 0;
-    cameraMatrix.at<double>(1,1) = 600.9586;
-    cameraMatrix.at<double>(1,2) = 244.52;
+    cameraMatrix.at<double>(1,1) = 621.414408;
+    cameraMatrix.at<double>(1,2) = 229.885843;
     cameraMatrix.at<double>(2,0) = 0;
     cameraMatrix.at<double>(2,1) = 0;
     cameraMatrix.at<double>(2,2) = 1;
 
     cv::Mat distCoeffs(5,1,cv::DataType<double>::type);
-    distCoeffs.at<double>(0) = 0.09386;
-    distCoeffs.at<double>(1) = 0.03747;
-    distCoeffs.at<double>(2) = 0.0026472;
-    distCoeffs.at<double>(3) = 0.00422;
-    distCoeffs.at<double>(4) = -0.4924;
+    distCoeffs.at<double>(0) = 0.140086;
+    distCoeffs.at<double>(1) = -0.339980;
+    distCoeffs.at<double>(2) = -0.000167;
+    distCoeffs.at<double>(3) = 0.003849;
+    distCoeffs.at<double>(4) = 0.290835;
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 
     ros::NodeHandle nh;
-    //ros::Subscriber sub = nh.subscribe("marker/pose", 10, &poseCallback);
 
     ImageConverter ic;
     cv::Mat img;
-//    cap >> img;
     ros::spinOnce();
     img = ic.getImage();
     ros::spinOnce();
@@ -189,11 +160,9 @@ int main(int argc, char *argv[])
 
         Matrix4d T = markerManager.estimateWorldPose();
 
+//        std::cout << "T: " << T << std::endl;
+
         T = markerManager.averageVec(T);
-
-//        std::cout << "t: " << T << std::endl;
-
-//        img = markerManager.getImage(); // don't seem to need this
 
         // Take inverse of T
         // convert rvec to rMat then to Eigen and find inverse
@@ -236,25 +205,32 @@ int main(int argc, char *argv[])
                 0,0,0,1;
         markerOrigin = markerOrigin*rotZ*rotX;
 
+        Matrix4d desiredPosition;
+        desiredPosition << 1,0,0,0,
+                           0,1,0,0,
+                           0,0,1,1,
+                           0,0,0,1;
+        desiredPosition = desiredPosition*rotY*rotY*rotZ*rotZ;
+
         // publish tf
         publishMarkerTFs(markerManager.getMarkerWorldTransforms(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
+        publishTF(desiredPosition, "marker_origin", "desired_position");
         if (markerManager.validPoseEstimate)
         {
             publishTF(camTf, "marker_origin", "camera");
         }
+
+        // publish processed image
+//        ic.publishImage(img); // does not work
 
         // Display images
         cv::imshow("Binary Image", imgBin);
 
         cv::imshow("Original Image", img);
 
-//        ic.publishImage(img);
-
         // keep window open until any key is pressed
-//        if(cv::waitKey(150) >= 0) break; // for recorded video
-        if(cv::waitKey(1) >= 0) break; // from USB cam
-
+        if(cv::waitKey(1) >= 3) break; // from USB cam
     }
 }
 

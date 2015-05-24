@@ -386,7 +386,7 @@ std::list<HoldPoint> Marker::merge(std::list<HoldPoint> left, std::list<HoldPoin
 
     while (left.size() > 0 && right.size() > 0)
     {
-        if (left.front().heldMatch.y <= right.front().heldMatch.y)
+        if (left.front().heldMatch.x <= right.front().heldMatch.x)
         {
             result.push_back(left.front());
             left.pop_front();

@@ -27,12 +27,15 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     tvec.at<double>(1) = 0;
     tvec.at<double>(2) = 0;
 
-    averageingWindow = 25;
+    averageingWindow = 200;
     validPoseEstimate = false;
 
     // define all marker world transforms
     markerWorldTransforms = vector<Matrix4d> (numMarkers);
 
+    // *****
+    // Set marker transforms here
+    // *****
     Matrix4d marker0WorldTransform;
     marker0WorldTransform << 1,0,0,0,
                              0,1,0,0,
@@ -40,13 +43,32 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
                              0,0,0,1;
     markerWorldTransforms[0] = marker0WorldTransform;
 
+//    // Marker 1 in office
+//    Matrix4d marker1WorldTransform;
+//    double theta = PI/2;
+//    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.10795,
+//                             0,          1, 0,           0,
+//                             sin(theta), 0, cos(theta),  0.3556,
+//                             0,          0, 0,           1;
+//    markerWorldTransforms[1] = marker1WorldTransform;
+
+//    // Marker 1 on docking station
+//    Matrix4d marker1WorldTransform;
+//    double theta = PI/4;
+//    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.1905,
+//                             0,          1, 0,           0,
+//                             sin(theta), 0, cos(theta),  0.0889,
+//                             0,          0, 0,           1;
+//    markerWorldTransforms[1] = marker1WorldTransform;
+
+    // Marker 1 on  board
     Matrix4d marker1WorldTransform;
-    double theta = PI/2;
-    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.10795,
+    double theta = 0;
+    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.373,
                              0,          1, 0,           0,
-                             sin(theta), 0, cos(theta),  0.3556,
+                             sin(theta), 0, cos(theta),  0,
                              0,          0, 0,           1;
-   markerWorldTransforms[1] = marker1WorldTransform;
+    markerWorldTransforms[1] = marker1WorldTransform;
 }
 
 void MarkerManager::setMarkerTransforms()
@@ -377,6 +399,10 @@ Matrix4d MarkerManager::averageVec (Matrix4d T)
         tvecCur.at<double>(0) = tvecSum0 / tvecQueue0.size();
         tvecCur.at<double>(1) = tvecSum1 / tvecQueue1.size();
         tvecCur.at<double>(2) = tvecSum2 / tvecQueue2.size();
+    }
+    else
+    {
+//        cout << "start over" << endl;
     }
     // convert back to eigen transform to return
     cv::Rodrigues(rvecCur, rMat);
