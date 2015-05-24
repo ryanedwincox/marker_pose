@@ -77,22 +77,39 @@ int main(int argc, char *argv[])
 
     // Camera matrices from camera calibration
     cv::Mat cameraMatrix(3,3,cv::DataType<double>::type);
-    cameraMatrix.at<double>(0,0) = 644.50;
+//    cameraMatrix.at<double>(0,0) = 644.50;
+//    cameraMatrix.at<double>(0,1) = 0;
+//    cameraMatrix.at<double>(0,2) = 339.18;
+//    cameraMatrix.at<double>(1,0) = 0;
+//    cameraMatrix.at<double>(1,1) = 600.9586;
+//    cameraMatrix.at<double>(1,2) = 244.52;
+//    cameraMatrix.at<double>(2,0) = 0;
+//    cameraMatrix.at<double>(2,1) = 0;
+//    cameraMatrix.at<double>(2,2) = 1;
+
+//    cv::Mat distCoeffs(5,1,cv::DataType<double>::type);
+//    distCoeffs.at<double>(0) = 0.09386;
+//    distCoeffs.at<double>(1) = 0.03747;
+//    distCoeffs.at<double>(2) = 0.0026472;
+//    distCoeffs.at<double>(3) = 0.00422;
+//    distCoeffs.at<double>(4) = -0.4924;
+
+    cameraMatrix.at<double>(0,0) = 619.146082;
     cameraMatrix.at<double>(0,1) = 0;
-    cameraMatrix.at<double>(0,2) = 339.18;
+    cameraMatrix.at<double>(0,2) = 335.052170;
     cameraMatrix.at<double>(1,0) = 0;
-    cameraMatrix.at<double>(1,1) = 600.9586;
-    cameraMatrix.at<double>(1,2) = 244.52;
+    cameraMatrix.at<double>(1,1) = 621.414408;
+    cameraMatrix.at<double>(1,2) = 229.885843;
     cameraMatrix.at<double>(2,0) = 0;
     cameraMatrix.at<double>(2,1) = 0;
     cameraMatrix.at<double>(2,2) = 1;
 
     cv::Mat distCoeffs(5,1,cv::DataType<double>::type);
-    distCoeffs.at<double>(0) = 0.09386;
-    distCoeffs.at<double>(1) = 0.03747;
-    distCoeffs.at<double>(2) = 0.0026472;
-    distCoeffs.at<double>(3) = 0.00422;
-    distCoeffs.at<double>(4) = -0.4924;  
+    distCoeffs.at<double>(0) = 0.140086;
+    distCoeffs.at<double>(1) = -0.339980;
+    distCoeffs.at<double>(2) = -0.000167;
+    distCoeffs.at<double>(3) = 0.003849;
+    distCoeffs.at<double>(4) = 0.290835;
 
     ros::init(argc, argv, "marker_tf_broadcaster");
 

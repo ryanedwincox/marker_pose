@@ -252,35 +252,41 @@ Matrix4d MarkerManager::estimateWorldPose()
         int flags = cv::ITERATIVE;
         bool useExtrinsicGuess = false;
 
-//        // use opencv solve pnp function
+        // use opencv solve pnp function
 //        cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
-        // my own solve pnp function
-        Matrix4d T = poseEst.solveP3P(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec);
-        rvec = poseEst.rvecFromT(T);
-        tvec = poseEst.tvecFromT(T);
+        for (int foo = 0; foo < 3; foo++)
+        {
+            for (int baz = 0; baz < 2; baz++)
+            {
+                // my own solve pnp function
+                Matrix4d T = poseEst.solveP3P(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, foo, baz);
+                rvec = poseEst.rvecFromT(T);
+                tvec = poseEst.tvecFromT(T);
 
-//        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
-//        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
-//        std::cout << "rvec: " << rvec << std::endl;
-//        std::cout << "tvec: " << tvec << std::endl;
+        //        std::cout << "totalWorldCoord: " << totalWorldCoord << std::endl;
+        //        std::cout << "totalImageCoord: " << totalImageCoord << std::endl;
+        //        std::cout << "rvec: " << rvec << std::endl;
+        //        std::cout << "tvec: " << tvec << std::endl;
 
-//        // check z direction
-//        std::cout << "zdirection: " << barcode.zDirection(rvec) << std::endl;
+        //        // check z direction
+        //        std::cout << "zdirection: " << barcode.zDirection(rvec) << std::endl;
 
-        // project axis
-        cv::Mat axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type); // 1 marker
-        std::vector<cv::Point2f> projectedAxis;
-        axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
-        axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
-        axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
-        axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
+                // project axis
+                cv::Mat axis = cv::Mat(4,1,cv::DataType<cv::Point3f>::type); // 1 marker
+                std::vector<cv::Point2f> projectedAxis;
+                axis.at<cv::Point3f>(0) = (cv::Point3f){0,0,0};
+                axis.at<cv::Point3f>(1) = (cv::Point3f){0.1,0,0};
+                axis.at<cv::Point3f>(2) = (cv::Point3f){0,0.1,0};
+                axis.at<cv::Point3f>(3) = (cv::Point3f){0,0,0.1};
 
-        cv::projectPoints(axis, rvec, tvec, barcode.cameraMatrix, barcode.distCoeffs, projectedAxis);
+                cv::projectPoints(axis, rvec, tvec, barcode.cameraMatrix, barcode.distCoeffs, projectedAxis);
 
-        cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,255), 2);
-        cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,255,0), 2);
-        cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,255,0), 2);
+                cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,250), 2);
+                cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,250,0), 2);
+                cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,255,0), 2);
+            }
+        }
     }
     else
     {

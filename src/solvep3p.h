@@ -22,7 +22,7 @@ class SolveP3P
 {
 public:
     SolveP3P();
-    Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec);
+    Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec, int foo, int baz);
     void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
     void setUpP3PEquationSystem(cv::Mat threeWorldCoord);
     cv::Mat solveP3PEquationSystem();
@@ -82,6 +82,10 @@ private:
     cv::Point3f AA;
     cv::Point3f BB;
     cv::Point3f CC;
+
+    // temp
+    int foo;
+    int baz;
 };
 
 #endif // SOLVEP3P_H
