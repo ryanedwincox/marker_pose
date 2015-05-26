@@ -6,6 +6,7 @@ Marker::Marker()
     targetSpacing = 0.105; // in meters
 
     foundMarker = -1;
+    markerID = -1;
 
     // Initialize rvec tvec
     rvec = cv::Mat(3,1,cv::DataType<double>::type);

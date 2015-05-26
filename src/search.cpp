@@ -243,7 +243,7 @@ void Search::runProgram(cv::Mat img)
 {
     image = img;
 
-    cout << "buffer size: " << sizeof(uchar) << endl;
+//    cout << "buffer size: " << sizeof(uchar) << endl;
 
     // load image to device
     err = clEnqueueWriteBuffer(queue,

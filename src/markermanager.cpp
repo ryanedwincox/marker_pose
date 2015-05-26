@@ -63,8 +63,10 @@ void MarkerManager::setMarkerTransforms()
 {
     for (int i = 0; i < numMarkers; i++)
     {
+//        cout << "bye" << endl;
         // for every marker set transform based on that markers ID
         markers[i].setWorldTransform(markers[i].eigenToCvMat(markerWorldTransforms[markers[i].getMarkerID()],4,4));
+
     }
 }
 
@@ -255,12 +257,12 @@ Matrix4d MarkerManager::estimateWorldPose()
         // use opencv solve pnp function
 //        cv::solvePnP(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
-        for (int foo = 0; foo < 3; foo++)
-        {
-            for (int baz = 0; baz < 2; baz++)
-            {
+//        for (int foo = 0; foo < 3; foo++)
+//        {
+//            for (int baz = 0; baz < 2; baz++)
+//            {
                 // my own solve pnp function
-                Matrix4d T = poseEst.solveP3P(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, foo, baz);
+                Matrix4d T = poseEst.solveP3P(totalWorldCoord, totalImageCoord, barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, img);
                 rvec = poseEst.rvecFromT(T);
                 tvec = poseEst.tvecFromT(T);
 
@@ -285,8 +287,8 @@ Matrix4d MarkerManager::estimateWorldPose()
                 cv::line(img, projectedAxis[0], projectedAxis[1], cv::Scalar(0,0,250), 2);
                 cv::line(img, projectedAxis[0], projectedAxis[2], cv::Scalar(0,250,0), 2);
                 cv::line(img, projectedAxis[0], projectedAxis[3], cv::Scalar(255,255,0), 2);
-            }
-        }
+//            }
+//        }
     }
     else
     {

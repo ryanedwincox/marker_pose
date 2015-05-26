@@ -15,6 +15,8 @@
 
 #include "poly34.h"
 
+#define DEBUG false
+
 using namespace std;
 using namespace Eigen;
 
@@ -22,10 +24,11 @@ class SolveP3P
 {
 public:
     SolveP3P();
-    Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec, int foo, int baz);
-    void normalizeImagePoints(cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs);
-    void setUpP3PEquationSystem(cv::Mat threeWorldCoord);
+    Matrix4d solveP3P(cv::Mat worldCoord, cv::Mat imageCoord, cv::Mat cameraMatrix, cv::Mat distCoeffs, cv::Mat rvec, cv::Mat tvec, cv::Mat img);
+    void normalizeImagePoints(cv::Mat cameraMatrix, cv::Mat distCoeffs);
+    void setUpP3PEquationSystem();
     cv::Mat solveP3PEquationSystem();
+    Matrix4d chooseBestSolution();
     Matrix4d rigidTransform(cv::Mat N, cv::Mat M);
 
     // other functions
@@ -35,7 +38,11 @@ public:
     cv::Mat tvecFromT(Matrix4d T);
 
 private:
+    cv::Mat img;
     cv::Mat normalizedCoord;
+    cv::Mat threeWorldCoord;
+    cv::Mat threeImageCoord;
+    cv::Mat imageCoord;
 
     // camera parameters
     cv::Mat cameraMatrix;
@@ -83,9 +90,9 @@ private:
     cv::Point3f BB;
     cv::Point3f CC;
 
-    // temp
-    int foo;
-    int baz;
+    // iterate through solutions
+    int xSolu;
+    int ySolu;
 };
 
 #endif // SOLVEP3P_H

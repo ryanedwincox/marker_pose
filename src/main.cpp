@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
     MarkerManager markerManager(numMarkers, barcode);
 
     // Temp **********
-    SolveP3P solveP3P;
+//    SolveP3P solveP3P;
 
     while (cap.isOpened())
     {
@@ -183,6 +183,8 @@ int main(int argc, char *argv[])
 
 //        std::cout << "Number of matches: " << matches.size() <<std::endl;
 
+
+
         // Average clusters
         std::list<cv::Point> avgMatches = averageMatches(matches);
 
@@ -193,8 +195,10 @@ int main(int argc, char *argv[])
         markerManager.drawTargets(H, cv::Scalar(0,0,255));
 
         markerManager.clusterTargetInputs(H);
+//        std::cout << "hi" << std::endl;
 
         markerManager.setMarkerTransforms();
+//        std::cout << "hi" << std::endl;
 
         Matrix4d T = markerManager.estimateWorldPose();
 
