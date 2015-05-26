@@ -30,13 +30,14 @@ cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color);
 void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv::Mat cameraMatrix, cv::Mat distCoeffs, Marker marker, Barcode barcode, Combinations comb);
 void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
-void comb(int N, int K);
+void publishAveragedTF(Matrix4d T, const char* parent, const char* node);
 
 int main(int argc, char *argv[])
 {
     // define kernel files
 //    const char * findSSLClPath = "cl/findSSL.cl";
-    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
+//    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
+    const char * findSSLClPath = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;
@@ -162,8 +163,6 @@ int main(int argc, char *argv[])
 
 //        std::cout << "T: " << T << std::endl;
 
-        T = markerManager.averageVec(T);
-
         // Take inverse of T
         // convert rvec to rMat then to Eigen and find inverse
         MatrixXd rMat(3,3);
@@ -218,7 +217,8 @@ int main(int argc, char *argv[])
         publishTF(desiredPosition, "marker_origin", "desired_position");
         if (markerManager.validPoseEstimate)
         {
-            publishTF(camTf, "marker_origin", "camera");
+            publishAveragedTF(camTf, "marker_origin", "camera");
+            publishTF(camTf, "marker_origin", "camera_raw");
         }
 
         // publish processed image
@@ -250,6 +250,47 @@ void publishTF(Matrix4d T, const char* parent, const char* node)
     Q.normalize();
     transform.setRotation(Q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent, node));
+}
+
+void publishAveragedTF(Matrix4d T, const char* parent, const char* node)
+{
+    tfScalar m00 = T(0,0); tfScalar m01 = T(0,1); tfScalar m02 = T(0,2);
+    tfScalar m10 = T(1,0); tfScalar m11 = T(1,1); tfScalar m12 = T(1,2);
+    tfScalar m20 = T(2,0); tfScalar m21 = T(2,1); tfScalar m22 = T(2,2);
+    tf::Matrix3x3 rotMat(m00,m01,m02,
+                        m10,m11,m12,
+                        m20,m21,m22);
+    tf::Vector3 transVec(T(0,3), T(1,3), T(2,3));
+
+    static tf::TransformBroadcaster br;
+    tf::Transform transform(rotMat, transVec);
+    tf::Quaternion Q = transform.getRotation();
+
+    // average Q and transVec
+    int averagingWindow = 50;
+
+    static tf::Quaternion cumulativeQ;
+    static tf::Vector3 cumulativeT;
+    static queue<tf::Quaternion> queueQ;
+    static queue<tf::Vector3> queueT;
+    cumulativeQ = cumulativeQ + Q;
+    cumulativeT = cumulativeT + transVec;
+    queueQ.push(Q);
+    queueT.push(transVec);
+    if (queueQ.size() > averagingWindow)
+    {
+        tf::Quaternion oldQ = queueQ.front();
+        tf::Vector3 oldT = queueT.front();
+        queueQ.pop();
+        queueT.pop();
+        cumulativeQ = cumulativeQ - oldQ;
+        cumulativeT = cumulativeT - oldT;
+    }
+    tf::Quaternion resultingQ = cumulativeQ / queueQ.size();
+    tf::Vector3 resultingT = cumulativeT / queueT.size();
+    resultingQ.normalize();
+    tf::Transform resultingTransform(resultingQ, resultingT);
+    br.sendTransform(tf::StampedTransform(resultingTransform, ros::Time::now(), parent, node));
 }
 
 // publish all static world marker transforms
@@ -338,35 +379,4 @@ std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
     }
     return avgMatches;
 }
-
-//cv::Mat drawTargets(cv::Mat img, std::vector<HoldPoint> H, cv::Scalar color)
-//{
-//    // Draw red taget over averaged matches
-//    for (std::vector<HoldPoint>::iterator it = H.begin(); it != H.end(); it++)
-//    {
-//        int l = 10; //radius of cross
-//        cv::Point center = it->heldMatch;
-
-//        cv::line(img, (cv::Point){center.x-l,center.y}, (cv::Point){center.x+l,center.y}, color, 2);
-//        cv::line(img, (cv::Point){center.x,center.y-l}, (cv::Point){center.x,center.y+l}, color, 2);
-//    }
-//    return img;
-//}
-
-// Not Used
-//void comb(int N, int K)
-//{
-//    std::string bitmask(K, 1); // K leading 1's
-//    bitmask.resize(N, 0); // N-K trailing 0's
-
-//    // print integers and permute bitmask
-//    do {
-//        for (int i = 0; i < N; ++i) // [0..N-1] integers
-//        {
-//            if (bitmask[i]) std::cout << " " << i;
-//        }
-//        std::cout << std::endl;
-//    } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
-//}
-
 

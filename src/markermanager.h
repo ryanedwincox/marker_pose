@@ -25,7 +25,6 @@ public:
     void setImage(cv::Mat img, cv::Mat imgBin);
     cv::Mat getImage();
     void publishMarkerTFs();
-    Matrix4d averageVec(Matrix4d T);
     void setMarkerTransforms();
     vector<Matrix4d> getMarkerWorldTransforms();
 

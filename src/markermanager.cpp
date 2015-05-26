@@ -27,7 +27,7 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     tvec.at<double>(1) = 0;
     tvec.at<double>(2) = 0;
 
-    averageingWindow = 200;
+    averageingWindow = 100;
     validPoseEstimate = false;
 
     // define all marker world transforms
@@ -327,88 +327,3 @@ void MarkerManager::drawTargets(std::vector<HoldPoint> H, cv::Scalar color)
         cv::line(img, (cv::Point){center.x,center.y-l}, (cv::Point){center.x,center.y+l}, color, 2);
     }
 }
-
-Matrix4d MarkerManager::averageVec (Matrix4d T)
-{
-
-    cv::Mat rvecCur = cv::Mat(3,1,cv::DataType<double>::type);
-    cv::Mat tvecCur = cv::Mat(3,1,cv::DataType<double>::type);
-
-    cv::Mat rMat = cv::Mat(3,3,cv::DataType<double>::type);
-    rMat = markers[0].eigenToCvMat(T.topLeftCorner(3,3),3,3);
-    cv::Rodrigues(rMat, rvecCur);
-
-    tvecCur = markers[0].eigenToCvMat(T.topRightCorner(3,1),3,1);
-
-    static std::queue<double> rvecQueue0;
-    static std::queue<double> rvecQueue1;
-    static std::queue<double> rvecQueue2;
-    static std::queue<double> tvecQueue0;
-    static std::queue<double> tvecQueue1;
-    static std::queue<double> tvecQueue2;
-
-    static double rvecSum0;
-    static double rvecSum1;
-    static double rvecSum2;
-    static double tvecSum0;
-    static double tvecSum1;
-    static double tvecSum2;
-
-    // Add vectors to sum
-    rvecSum0 = rvecSum0 + rvecCur.at<double>(0);
-    rvecSum1 = rvecSum1 + rvecCur.at<double>(1);
-    rvecSum2 = rvecSum2 + rvecCur.at<double>(2);
-    tvecSum0 = tvecSum0 + tvecCur.at<double>(0);
-    tvecSum1 = tvecSum1 + tvecCur.at<double>(1);
-    tvecSum2 = tvecSum2 + tvecCur.at<double>(2);
-
-    // Add vectors to queue
-    rvecQueue0.push(rvecCur.at<double>(0));
-    rvecQueue1.push(rvecCur.at<double>(1));
-    rvecQueue2.push(rvecCur.at<double>(2));
-    tvecQueue0.push(tvecCur.at<double>(0));
-    tvecQueue1.push(tvecCur.at<double>(1));
-    tvecQueue2.push(tvecCur.at<double>(2));
-
-    if (rvecQueue0.size() >= averageingWindow)
-    {
-        double rvecOld0 = rvecQueue0.front();
-        double rvecOld1 = rvecQueue1.front();
-        double rvecOld2 = rvecQueue2.front();
-        double tvecOld0 = tvecQueue0.front();
-        double tvecOld1 = tvecQueue1.front();
-        double tvecOld2 = tvecQueue2.front();
-
-        rvecQueue0.pop();
-        rvecQueue1.pop();
-        rvecQueue2.pop();
-        tvecQueue0.pop();
-        tvecQueue1.pop();
-        tvecQueue2.pop();
-
-        rvecSum0 = rvecSum0 - rvecOld0;
-        rvecSum1 = rvecSum1 - rvecOld1;
-        rvecSum2 = rvecSum2 - rvecOld2;
-        tvecSum0 = tvecSum0 - tvecOld0;
-        tvecSum1 = tvecSum1 - tvecOld1;
-        tvecSum2 = tvecSum2 - tvecOld2;
-
-        rvecCur.at<double>(0) = rvecSum0 / rvecQueue0.size();
-        rvecCur.at<double>(1) = rvecSum1 / rvecQueue1.size();
-        rvecCur.at<double>(2) = rvecSum2 / rvecQueue2.size();
-        tvecCur.at<double>(0) = tvecSum0 / tvecQueue0.size();
-        tvecCur.at<double>(1) = tvecSum1 / tvecQueue1.size();
-        tvecCur.at<double>(2) = tvecSum2 / tvecQueue2.size();
-    }
-    else
-    {
-//        cout << "start over" << endl;
-    }
-    // convert back to eigen transform to return
-    cv::Rodrigues(rvecCur, rMat);
-    T.topLeftCorner(3,3) = markers[0].cvMatToEigen(rMat,3,3);
-    T.topRightCorner(3,1) = markers[0].cvMatToEigen(tvecCur,3,1);
-    return T;
-}
-
-
