@@ -79,9 +79,9 @@ void Barcode::projectSampleRegions(cv::Mat rvec, cv::Mat tvec)
     {
         cv::Point3f samplePoint = samplePoints.at<cv::Point3f>(i);
         sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x-r,samplePoint.y-r,0};
-        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x+r,samplePoint.y-r,0};
-        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x-r,samplePoint.y+r,0};
-        sampleRegions.at<cv::Point3f>(4*i+0) = (cv::Point3f){samplePoint.x+r,samplePoint.y+r,0};
+        sampleRegions.at<cv::Point3f>(4*i+1) = (cv::Point3f){samplePoint.x+r,samplePoint.y-r,0};
+        sampleRegions.at<cv::Point3f>(4*i+2) = (cv::Point3f){samplePoint.x-r,samplePoint.y+r,0};
+        sampleRegions.at<cv::Point3f>(4*i+3) = (cv::Point3f){samplePoint.x+r,samplePoint.y+r,0};
     }
 
     cv::projectPoints(sampleRegions, rvec, tvec, cameraMatrix, distCoeffs, projectedSampleRegions);
@@ -122,8 +122,9 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
 //    std::cout << "barcode input: ";
     for (int i = 0; i < numSamples; i++)
     {
+//        barcodeInput[i] = getRegionValue(imgBin, projectedSamplePoints[i]);
+        barcodeInput[i] = getAveragedRegionValue(imgBin, projectedSampleRegions[4*i+0], projectedSampleRegions[4*i+1], projectedSampleRegions[4*i+2], projectedSampleRegions[4*i+3]);
         barcodeInput[i] = getRegionValue(imgBin, projectedSamplePoints[i]);
-//        barcodeInput[i] = getAveragedRegionValue(imgBin, projectedSampleRegions[4*i+0], projectedSampleRegions[4*i+1], projectedSampleRegions[4*i+2], projectedSampleRegions[4*i+3]);
 //        std::cout << barcodeInput[i];
     }
 
@@ -188,21 +189,38 @@ int Barcode::getRegionValue(cv::Mat imgBin, cv::Point2f point)
     }
 }
 
-// Returns the averaged value of barcode region
+// Returns the averaged value of barcode region looking at the average along the two diagonals
 // parameters TopLeft, TopRight, BottomLeft, BottomRight
 int Barcode::getAveragedRegionValue(cv::Mat imgBin, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR)
 {
     if (pointInFrame(TL) && pointInFrame(TR) && pointInFrame(BL) && pointInFrame(BR))
     {
-        double m = (TR.y-TL.y)/(TR.x-TL.x);
-        double b = TL.y - m*TL.x;
+        double m = (TR.y-BL.y)/(TR.x-BL.x);
+        double b = TR.y - m*TR.x;
         int sum = 0;
         for (int x = TL.x; x < TR.x; x++)
         {
-            sum += imgBin.at<uchar>(x, m*x+b);
-            imgBin.at<uchar>(x, m*x+b) = 255;
+//            sum += imgBin.at<uchar>(x, m*x+b);
+//            imgBin.at<uchar>(x, m*x+b) = 255;
+            int val = m*x+b;
+            cv::circle(imgBin,(cv::Point2i){x,val},1,cv::Scalar(255,255,255),-1);
         }
         int rowAvg = sum/(TL.x-TR.x);
+
+        // TODO finish this
+        // TODO also project a smaller square so not checking points too close to the edge
+//        double m1 = (BR.y-TL.y)/(BR.x-TL.x);
+//        double b1 = BR.y - m*BR.x;
+//        int sum1 = 0;
+//        for (int x = L.x; x < TR.x; x++)
+//        {
+////            sum += imgBin.at<uchar>(x, m*x+b);
+////            imgBin.at<uchar>(x, m*x+b) = 255;
+//            int val = m*x+b;
+//            cv::circle(imgBin,(cv::Point2i){x,val},1,cv::Scalar(255,255,255),-1);
+//        }
+//        int rowAvg = sum/(TL.x-TR.x);
+
         std::cout << "rowAvg: " << rowAvg << std::endl;
         return 1;
     }

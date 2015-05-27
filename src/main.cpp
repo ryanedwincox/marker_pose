@@ -221,6 +221,8 @@ int main(int argc, char *argv[])
             publishTF(camTf, "marker_origin", "camera_raw");
         }
 
+//        barcode.getMarkerNumber(img);
+
         // publish processed image
 //        ic.publishImage(img); // does not work
 
@@ -232,6 +234,8 @@ int main(int argc, char *argv[])
         // keep window open until any key is pressed
         if(cv::waitKey(1) >= 3) break; // from USB cam
     }
+    ros::shutdown();
+    return 0;
 }
 
 void publishTF(Matrix4d T, const char* parent, const char* node)
