@@ -74,7 +74,7 @@ void Barcode::projectSamplePoints(cv::Mat rvec, cv::Mat tvec)
 
 void Barcode::projectSampleRegions(cv::Mat rvec, cv::Mat tvec)
 {
-    float r = barcodeGridWidth/6; // barcodeGridWidth/6 is the radius of one box but probably want slightly smaller than that
+    float r = barcodeGridWidth/10; // barcodeGridWidth/6 is the radius of one box but probably want slightly smaller than that
     for (int i = 0; i < 9; i++)
     {
         cv::Point3f samplePoint = samplePoints.at<cv::Point3f>(i);
@@ -119,14 +119,17 @@ int Barcode::getMarkerNumber(cv::Mat imgBin)
 //    }
 //    std::cout << std::endl;
 
+    cv::Mat debug(480,640,cv::DataType<uchar>::type,cv::Scalar(0,0,0));
+
 //    std::cout << "barcode input: ";
     for (int i = 0; i < numSamples; i++)
     {
 //        barcodeInput[i] = getRegionValue(imgBin, projectedSamplePoints[i]);
-        barcodeInput[i] = getAveragedRegionValue(imgBin, projectedSampleRegions[4*i+0], projectedSampleRegions[4*i+1], projectedSampleRegions[4*i+2], projectedSampleRegions[4*i+3]);
-        barcodeInput[i] = getRegionValue(imgBin, projectedSamplePoints[i]);
+        barcodeInput[i] = getAveragedRegionValue(imgBin, debug, projectedSampleRegions[4*i+0], projectedSampleRegions[4*i+1], projectedSampleRegions[4*i+2], projectedSampleRegions[4*i+3]);
 //        std::cout << barcodeInput[i];
     }
+
+//    cv::imshow("Debug Window", debug);
 
     for (int j = 0; j < NUM_BARCODES; j++)
     {
@@ -191,42 +194,72 @@ int Barcode::getRegionValue(cv::Mat imgBin, cv::Point2f point)
 
 // Returns the averaged value of barcode region looking at the average along the two diagonals
 // parameters TopLeft, TopRight, BottomLeft, BottomRight
-int Barcode::getAveragedRegionValue(cv::Mat imgBin, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR)
+int Barcode::getAveragedRegionValue(cv::Mat imgBin, cv::Mat debug, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR)
 {
     if (pointInFrame(TL) && pointInFrame(TR) && pointInFrame(BL) && pointInFrame(BR))
     {
+//        cv::circle(imgBin,TL,1,cv::Scalar(255,255,255),-1);
+//        cv::circle(imgBin,TR,1,cv::Scalar(255,255,255),-1);
+//        cv::circle(imgBin,BL,1,cv::Scalar(255,255,255),-1);
+//        cv::circle(imgBin,BR,1,cv::Scalar(255,255,255),-1);
         double m = (TR.y-BL.y)/(TR.x-BL.x);
         double b = TR.y - m*TR.x;
-        int sum = 0;
-        for (int x = TL.x; x < TR.x; x++)
+//        double sum = 0;
+//        double count = 0;
+        int countHigh = 0;
+        int countLow = 0;
+        for (int x = BL.x; x < TR.x; x++)
         {
-//            sum += imgBin.at<uchar>(x, m*x+b);
-//            imgBin.at<uchar>(x, m*x+b) = 255;
-            int val = m*x+b;
-            cv::circle(imgBin,(cv::Point2i){x,val},1,cv::Scalar(255,255,255),-1);
+            int y = m*x+b;
+            if ((y < TR.y && y > BL.y) || (y > TR.y && y < BL.y))
+            {
+    //                cv::circle(imgBin,(cv::Point2i){x,y},1,cv::Scalar(255,255,255),-1);
+//                    cv::circle(debug,(cv::Point2i){x,y},1,cv::Scalar(255,255,255),-1);
+    //                sum += (double)imgBin.at<uchar>(y,x);
+    //                count++;
+                if ((int)imgBin.at<uchar>(y,x) / 255 == 1)
+                {
+                    countHigh++;
+                }
+                else
+                {
+                    countLow++;
+                }
+            }
         }
-        int rowAvg = sum/(TL.x-TR.x);
 
-        // TODO finish this
-        // TODO also project a smaller square so not checking points too close to the edge
-//        double m1 = (BR.y-TL.y)/(BR.x-TL.x);
-//        double b1 = BR.y - m*BR.x;
-//        int sum1 = 0;
-//        for (int x = L.x; x < TR.x; x++)
-//        {
-////            sum += imgBin.at<uchar>(x, m*x+b);
-////            imgBin.at<uchar>(x, m*x+b) = 255;
-//            int val = m*x+b;
-//            cv::circle(imgBin,(cv::Point2i){x,val},1,cv::Scalar(255,255,255),-1);
-//        }
-//        int rowAvg = sum/(TL.x-TR.x);
+        double m1 = (TL.y-BR.y)/(TL.x-BR.x);
+        double b1 = TL.y - m1*TL.x;
+        for (int x = TL.x; x < BR.x; x++)
+        {
+            int y = m1*x+b1;
+            if ((y < TL.y && y > BR.y) || (y > TL.y && y < BR.y))
+            {
+//                cv::circle(imgBin,(cv::Point2i){x,y},1,cv::Scalar(255,255,255),-1);
+//                cv::circle(debug,(cv::Point2i){x,y},1,cv::Scalar(255,255,255),-1);
+                if ((int)imgBin.at<uchar>(y,x) / 255 == 1)
+                {
+                    countHigh++;
+                }
+                else
+                {
+                    countLow++;
+                }
+            }
+        }
 
-        std::cout << "rowAvg: " << rowAvg << std::endl;
-        return 1;
+        if (countHigh > countLow)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
     }
     else
     {
-        return 0;
+        return -1;
     }
 }
 

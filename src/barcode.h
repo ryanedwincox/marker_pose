@@ -24,7 +24,7 @@ public:
     void setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h);
     int getMarkerNumber(cv::Mat imgBin);
     int getRegionValue(cv::Mat img, cv::Point2f samplePoint);
-    int getAveragedRegionValue(cv::Mat img, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR);
+    int getAveragedRegionValue(cv::Mat img, cv::Mat debug, cv::Point2f TL, cv::Point2f TR, cv::Point2f BL, cv::Point2f BR);
     void rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec);
     int getImageWidth();
     int getImageHeight();
