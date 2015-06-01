@@ -22,6 +22,7 @@
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <turtlesim/Pose.h>
+#include <std_msgs/Bool.h>
 
 // declare local methods
 std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> matches, int matchIndex, bool horz);
@@ -79,6 +80,8 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "marker_tf_broadcaster");
 
     ros::NodeHandle nh;
+
+    ros::Publisher position_known_pub = nh.advertise<std_msgs::Bool>("position_known", 100);
 
     ImageConverter ic;
     cv::Mat img;
@@ -217,6 +220,9 @@ int main(int argc, char *argv[])
                            0,0,0,1;
         desiredPosition = desiredPosition*rotY*rotY*rotZ*rotZ;
 
+        // create position known message
+        std_msgs::Bool msg;
+
         // publish tf
         publishMarkerTFs(markerManager.getMarkerWorldTransforms(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
@@ -225,7 +231,14 @@ int main(int argc, char *argv[])
         {
             publishAveragedTF(camTf, "marker_origin", "camera");
             publishTF(camTf, "marker_origin", "camera_raw");
+            msg.data = true;
         }
+        else
+        {
+            msg.data = false;
+        }
+
+        position_known_pub.publish(msg);
 
 //        barcode.getMarkerNumber(img);
 
