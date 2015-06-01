@@ -31,7 +31,6 @@ public:
     bool validPoseEstimate;
 
 private:
-    int averageingWindow;
     cv::Mat rvec;
     cv::Mat tvec;
     cv::Mat img;
@@ -42,20 +41,6 @@ private:
     vector<Marker> markers;
     vector<int> dist;
     vector<Matrix4d> markerWorldTransforms;
-
-    static std::queue<double> rvecQueue0;
-    static std::queue<double> rvecQueue1;
-    static std::queue<double> rvecQueue2;
-    static std::queue<double> tvecQueue0;
-    static std::queue<double> tvecQueue1;
-    static std::queue<double> tvecQueue2;
-
-    static double rvecSum0;
-    static double rvecSum1;
-    static double rvecSum2;
-    static double tvecSum0;
-    static double tvecSum1;
-    static double tvecSum2;
 };
 
 #endif // MARKERMANAGER_H

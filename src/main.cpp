@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
 {
     // define kernel files
 //    const char * findSSLClPath = "cl/findSSL.cl";
-//    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
-    const char * findSSLClPath = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/cl/findSSL.cl";
+    const char * findSSLClPath = "/home/portage_bay/ros_workspace/marker_pose/cl/findSSL.cl";
+//    const char * findSSLClPath = "/home/pierre/Dropbox/uh/uh1/ros_ws/marker_pose/cl/findSSL.cl";
 
     // Initialize OpenCL
     Search s1;
@@ -82,9 +82,12 @@ int main(int argc, char *argv[])
 
     ImageConverter ic;
     cv::Mat img;
+
     ros::spinOnce();
     img = ic.getImage();
-    ros::spinOnce();
+//    ros::spinOnce();
+
+    std::cout << "check point 1" << std::cout;
 
     int w = img.cols;
     int h = img.rows;
@@ -104,7 +107,9 @@ int main(int argc, char *argv[])
 
         if (VERBOSE)
         {
-            std::cout << "image width: " << w << " image height: " << h << std::endl;
+            int ww = img.cols;
+            int hh = img.rows;
+            std::cout << "image width: " << ww << " image height: " << hh << std::endl;
         }
 
         // convert to grayscale
@@ -116,7 +121,7 @@ int main(int argc, char *argv[])
         int c = 0;
         cv::Mat imgBin;
         cv::adaptiveThreshold(imgGray, imgBin, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, blockSize, c);
-//        double thresh = 175;
+//        double thresh = 125;
 //        cv::threshold(imgGray, imgBin, thresh, 255, cv::THRESH_BINARY);
 
         // transpose for verticle detection
@@ -125,6 +130,7 @@ int main(int argc, char *argv[])
 
         if (firstTime)
         {
+            std::cout << "check point 2" << std::cout;
             s1.setImage(imgBin);
             s2.setImage(imgBinVert);
             firstTime = false;
@@ -207,7 +213,7 @@ int main(int argc, char *argv[])
         Matrix4d desiredPosition;
         desiredPosition << 1,0,0,0,
                            0,1,0,0,
-                           0,0,1,1,
+                           0,0,1,0.5,
                            0,0,0,1;
         desiredPosition = desiredPosition*rotY*rotY*rotZ*rotZ;
 
@@ -271,7 +277,7 @@ void publishAveragedTF(Matrix4d T, const char* parent, const char* node)
     tf::Quaternion Q = transform.getRotation();
 
     // average Q and transVec
-    int averagingWindow = 50;
+    int averagingWindow = 15;
 
     static tf::Quaternion cumulativeQ;
     static tf::Vector3 cumulativeT;

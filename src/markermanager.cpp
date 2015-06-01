@@ -27,7 +27,6 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     tvec.at<double>(1) = 0;
     tvec.at<double>(2) = 0;
 
-    averageingWindow = 100;
     validPoseEstimate = false;
 
     // define all marker world transforms
