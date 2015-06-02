@@ -9,6 +9,10 @@
 #include "math.h"
 #include "limits.h"
 #include <sstream>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "search.h"
 #include "holdpoint.h"
@@ -32,6 +36,9 @@ void poseEstimation(cv::Mat imgBin, cv::Mat rvec, cv::Mat tvec, int w, int h, cv
 void publishMarkerTFs(vector<Matrix4d> markerTransforms, const char* parent);
 void publishTF(Matrix4d T, const char* parent, const char* node);
 void publishAveragedTF(Matrix4d T, const char* parent, const char* node);
+void ctrlc_handler(int s);
+
+volatile sig_atomic_t ctrlc_flag = 0;
 
 int main(int argc, char *argv[])
 {
@@ -80,6 +87,10 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "marker_tf_broadcaster");
 
     ros::NodeHandle nh;
+
+    // ctrl c handeler
+    // must be created after nh
+    signal (SIGINT,ctrlc_handler);
 
     ros::Publisher position_known_pub = nh.advertise<std_msgs::Bool>("position_known", 100);
 
@@ -252,7 +263,20 @@ int main(int argc, char *argv[])
 
         // keep window open until any key is pressed
         if(cv::waitKey(1) >= 3) break; // from USB cam
+
+        if (ctrlc_flag)
+        {
+//            std::cout << "ctrl C" << std::endl;
+            break;
+        }
     }
+
+    // publish final message to turn off motors
+    std_msgs::Bool msg;
+    msg.data = false;
+    position_known_pub.publish(msg);
+    ros::spinOnce();
+
     ros::shutdown();
     return 0;
 }
@@ -401,5 +425,9 @@ std::list<cv::Point> averageMatches(std::list<cv::Point> matches)
         }
     }
     return avgMatches;
+}
+
+void ctrlc_handler(int s){
+    ctrlc_flag = 1;
 }
 
