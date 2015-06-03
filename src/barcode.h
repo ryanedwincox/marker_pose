@@ -10,14 +10,13 @@
 #include "math.h"
 
 #define PI 3.1415926
-#define NUM_BARCODES 8
+#define NUM_MARKERS 4
+#define NUM_BARCODES NUM_MARKERS*4 // one for each orientation
 
 class Barcode
 {
 public:
     Barcode();
-
-
     void projectSamplePoints(cv::Mat rvec, cv::Mat tvec);
     void projectSampleRegions(cv::Mat rvec, cv::Mat tvec);
     bool zDirection(cv::Mat rvec);
@@ -29,6 +28,7 @@ public:
     int getImageWidth();
     int getImageHeight();
     bool pointInFrame(cv::Point2f point);
+    int getNumMarkers();
 
     cv::Mat cameraMatrix;
     cv::Mat distCoeffs;

@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     img = ic.getImage();
 //    ros::spinOnce();
 
-    std::cout << "check point 1" << std::cout;
+//    std::cout << "check point 1" << std::cout;
 
     int w = img.cols;
     int h = img.rows;
@@ -109,8 +109,7 @@ int main(int argc, char *argv[])
     Barcode barcode;
     barcode.setCameraParmeters(cameraMatrix, distCoeffs, w, h);
 
-    int numMarkers = 2;
-    MarkerManager markerManager(numMarkers, barcode);
+    MarkerManager markerManager(barcode);
 
 //    while (cap.isOpened())
     while (ros::ok())
@@ -144,7 +143,7 @@ int main(int argc, char *argv[])
 
         if (firstTime)
         {
-            std::cout << "check point 2" << std::cout;
+//            std::cout << "check point 2" << std::cout;
             s1.setImage(imgBin);
             s2.setImage(imgBinVert);
             firstTime = false;
@@ -375,7 +374,7 @@ std::list<cv::Point> readMatches(cv::Mat img, Search s, std::list<cv::Point> mat
             matches.push_front(match);
 
             // Color a point at each match
-            cv::circle(img, matches.front(), 1, cv::Scalar(0,255,0), -1);
+//            cv::circle(img, matches.front(), 1, cv::Scalar(0,255,0), -1);
         }
     }
 //    cv::circle(img, matches.front(), 15, cv::Scalar(0,255,0), 1);

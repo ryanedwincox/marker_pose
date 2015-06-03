@@ -14,7 +14,7 @@ typedef Matrix<double, 4, 4> Matrix4d;
 class MarkerManager
 {
 public:
-    MarkerManager(int numMarkers, Barcode barcode);
+    MarkerManager(Barcode barcode);
     vector<Marker> getMarkers();
     void clusterTargetInputs(vector<HoldPoint> H);
     vector<HoldPoint> findTargetCluster();

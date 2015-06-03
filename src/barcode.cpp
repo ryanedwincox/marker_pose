@@ -15,6 +15,12 @@ Barcode::Barcode()
     projectedSampleRegions = std::vector<cv::Point2f>();
 
     // define barcode patterns
+    // Note: defining the barcode patterns seems a little wierd, you need to rotate it 90 degrees and invert I think
+    // To add a barcode there are three steps:
+    // 1. update the 4 codes below
+    // 2. update the NUM_MARKERS in the barcode.h
+    // 3. add the transformation in markermanager.cpp
+    // Marker 0
     barcodes[0][0] = 0; barcodes[0][1] = 0; barcodes[0][2] = 0;
     barcodes[0][3] = 1; barcodes[0][4] = 0; barcodes[0][5] = 0;
     barcodes[0][6] = 0; barcodes[0][7] = 0; barcodes[0][8] = 0;
@@ -31,6 +37,7 @@ Barcode::Barcode()
     barcodes[3][3] = 0; barcodes[3][4] = 0; barcodes[3][5] = 0;
     barcodes[3][6] = 0; barcodes[3][7] = 1; barcodes[3][8] = 0;
 
+    // Marker 1
     barcodes[4][0] = 0; barcodes[4][1] = 0; barcodes[4][2] = 0;
     barcodes[4][3] = 1; barcodes[4][4] = 0; barcodes[4][5] = 0;
     barcodes[4][6] = 0; barcodes[4][7] = 1; barcodes[4][8] = 0;
@@ -46,6 +53,41 @@ Barcode::Barcode()
     barcodes[7][0] = 0; barcodes[7][1] = 0; barcodes[7][2] = 0;
     barcodes[7][3] = 0; barcodes[7][4] = 0; barcodes[7][5] = 1;
     barcodes[7][6] = 0; barcodes[7][7] = 1; barcodes[7][8] = 0;
+
+    // Marker 2
+    barcodes[8][0] = 0; barcodes[8][1] = 1; barcodes[8][2] = 0;
+    barcodes[8][3] = 0; barcodes[8][4] = 0; barcodes[8][5] = 0;
+    barcodes[8][6] = 1; barcodes[8][7] = 0; barcodes[8][8] = 0;
+
+    barcodes[9][0] = 1; barcodes[9][1] = 0; barcodes[9][2] = 0;
+    barcodes[9][3] = 0; barcodes[9][4] = 0; barcodes[9][5] = 1;
+    barcodes[9][6] = 0; barcodes[9][7] = 0; barcodes[9][8] = 0;
+
+    barcodes[10][0] = 0; barcodes[10][1] = 0; barcodes[10][2] = 1;
+    barcodes[10][3] = 0; barcodes[10][4] = 0; barcodes[10][5] = 0;
+    barcodes[10][6] = 0; barcodes[10][7] = 1; barcodes[10][8] = 0;
+
+    barcodes[11][0] = 0; barcodes[11][1] = 0; barcodes[11][2] = 0;
+    barcodes[11][3] = 1; barcodes[11][4] = 0; barcodes[11][5] = 0;
+    barcodes[11][6] = 0; barcodes[11][7] = 0; barcodes[11][8] = 1;
+
+    // Marker 3
+    barcodes[12][0] = 0; barcodes[12][1] = 1; barcodes[12][2] = 0;
+    barcodes[12][3] = 0; barcodes[12][4] = 0; barcodes[12][5] = 0;
+    barcodes[12][6] = 1; barcodes[12][7] = 1; barcodes[12][8] = 0;
+
+    barcodes[13][0] = 1; barcodes[13][1] = 0; barcodes[13][2] = 0;
+    barcodes[13][3] = 1; barcodes[13][4] = 0; barcodes[13][5] = 1;
+    barcodes[13][6] = 0; barcodes[13][7] = 0; barcodes[13][8] = 0;
+
+    barcodes[14][0] = 0; barcodes[14][1] = 1; barcodes[14][2] = 1;
+    barcodes[14][3] = 0; barcodes[14][4] = 0; barcodes[14][5] = 0;
+    barcodes[14][6] = 0; barcodes[14][7] = 1; barcodes[14][8] = 0;
+
+    barcodes[15][0] = 0; barcodes[15][1] = 0; barcodes[15][2] = 0;
+    barcodes[15][3] = 1; barcodes[15][4] = 0; barcodes[15][5] = 1;
+    barcodes[15][6] = 0; barcodes[15][7] = 0; barcodes[15][8] = 1;
+
 }
 
 void Barcode::setCameraParmeters(cv::Mat cameraMatrix, cv::Mat distCoeffs, int w, int h)
@@ -182,7 +224,6 @@ void Barcode::rotateOrigin(int num, cv::Mat* rvec, cv::Mat* tvec)
 int Barcode::getRegionValue(cv::Mat imgBin, cv::Point2f point)
 {
     if (pointInFrame(point))
-//    if (point.x >= 0 && point.y >= 0 && point.x <= w && point.y <= h)
     {
         return (int)imgBin.at<uchar>(point.y,point.x) / 255;
     }
@@ -276,4 +317,9 @@ int Barcode::getImageWidth()
 int Barcode::getImageHeight()
 {
     return h;
+}
+
+int Barcode::getNumMarkers()
+{
+    return NUM_MARKERS;
 }

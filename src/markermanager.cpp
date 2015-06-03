@@ -1,8 +1,8 @@
 #include "markermanager.h"
 
-MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
+MarkerManager::MarkerManager(Barcode barcode)
 {
-    this->numMarkers = numMarkers;
+    this->numMarkers = barcode.getNumMarkers();
     this->barcode = barcode;
 
     markers = vector<Marker> (numMarkers);
@@ -37,7 +37,7 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
     // *****
     Matrix4d marker0WorldTransform;
     marker0WorldTransform << 1,0,0,0,
-                             0,1,0,0,
+                             0,1,0,0, // 0.475
                              0,0,1,0,
                              0,0,0,1;
     markerWorldTransforms[0] = marker0WorldTransform;
@@ -62,12 +62,27 @@ MarkerManager::MarkerManager(int numMarkers, Barcode barcode)
 
     // Marker 1 on  board
     Matrix4d marker1WorldTransform;
-    double theta = 0;
-    marker1WorldTransform << cos(theta), 0, -sin(theta), 0.373,
-                             0,          1, 0,           0,
-                             sin(theta), 0, cos(theta),  0,
-                             0,          0, 0,           1;
+    marker1WorldTransform << 0, 0, 0, 0,
+                             0, 1, 0, -0.5, //0
+                             0, 0, 1, 0,
+                             0, 0, 0, 1;
     markerWorldTransforms[1] = marker1WorldTransform;
+
+    // Marker 2 on  board
+    Matrix4d marker2WorldTransform;
+    marker2WorldTransform << 1, 0, 0, 0,
+                             0, 1, 0, -.485,
+                             0, 0, 1, 0,
+                             0, 0, 0, 1;
+    markerWorldTransforms[2] = marker2WorldTransform;
+
+    // Marker 3 on  board
+    Matrix4d marker3WorldTransform;
+    marker3WorldTransform << 1, 0, 0, 0,
+                             0, 1, 0, -1,
+                             0, 0, 1, 0,
+                             0, 0, 0, 1;
+    markerWorldTransforms[3] = marker3WorldTransform;
 }
 
 void MarkerManager::setMarkerTransforms()

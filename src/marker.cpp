@@ -37,7 +37,7 @@ Marker::Marker()
 
     enoughMarkers = false;
 
-    imgCoordOrientation = -1;
+    imgCoordOrientation = 0;
 }
 
 void Marker::setWorldCoord()
@@ -152,7 +152,7 @@ cv::Mat Marker::getImageCoord(int orientation)
     }
     else
     {
-        std::cout << "error: requested invalid image coordinate orientation" << std::endl;
+        std::cout << "error: requested invalid image coordinate orientation: " << orientation << std::endl;
     }
 //    return imageCoordVec.at(orientation);
 }
@@ -172,6 +172,7 @@ void Marker::poseEstimation(cv::Mat imgBin, int w, int h, Barcode barcode)
     // Iterate through both possible orientations
     for (int i = 0; i < numOrientations; i++)
     {
+//        std::cout << "i: " << i << std::endl;
         cv::solvePnP(getWorldCoord(), getImageCoord(i), barcode.cameraMatrix, barcode.distCoeffs, rvec, tvec, useExtrinsicGuess, flags);
 
         // if rvec and tvec != 0
