@@ -130,10 +130,10 @@ int main(int argc, char *argv[])
         cvtColor(img, imgGray, CV_BGR2GRAY);
 
         // convert to binary
-        int blockSize = 75;
-        int c = 0;
+        int blockSize = 101;
+        int c = -3;
         cv::Mat imgBin;
-        cv::adaptiveThreshold(imgGray, imgBin, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, blockSize, c);
+        cv::adaptiveThreshold(imgGray, imgBin, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, blockSize, c);
 //        double thresh = 125;
 //        cv::threshold(imgGray, imgBin, thresh, 255, cv::THRESH_BINARY);
 
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
         // publish tf
         publishMarkerTFs(markerManager.getMarkerWorldTransforms(), "marker_origin");
         publishTF(markerOrigin, "world", "marker_origin");
-        publishTF(desiredPosition, "marker_origin", "desired_position");
+//        publishTF(desiredPosition, "marker_origin", "desired_position");
         if (markerManager.validPoseEstimate)
         {
             publishAveragedTF(camTf, "marker_origin", "camera");

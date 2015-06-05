@@ -10,7 +10,7 @@
 #include "math.h"
 
 #define PI 3.1415926
-#define NUM_MARKERS 4
+#define NUM_MARKERS 1
 #define NUM_BARCODES NUM_MARKERS*4 // one for each orientation
 
 class Barcode

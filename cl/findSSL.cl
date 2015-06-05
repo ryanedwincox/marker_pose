@@ -62,7 +62,7 @@ __kernel void filter_kernel(
 
         newImg[globalPos] = m1 * 255;
 
-        double thresh = 0.60;
+        double thresh = 0.58;
         if (m1 > thresh)
         {
             //newImg[globalPos] = m1 * 255;
