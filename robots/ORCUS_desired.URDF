@@ -1,0 +1,13 @@
+<robot name="orcus_desired">
+  <link name="/desired_position">
+    <visual>
+      <geometry>
+        <mesh filename="package://marker_pose/meshes/ROV_ORCUS.STL"/>
+      </geometry>
+      <origin rpy="0 0 3.1415" xyz="2.35 0.2 0.3"/>
+        <material name="red">
+          <color rgba="1 0 0 0.5"/>
+        </material>
+    </visual>
+  </link>
+</robot>

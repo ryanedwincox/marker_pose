@@ -1,0 +1,19 @@
+<launch>
+    <arg
+        name="model" />
+    <arg
+        name="gui"
+        default="False" />
+    <param
+        name="robot_description"
+        textfile="$(find marker_pose)/robots/ORCUS.URDF" />
+    <param
+        name="robot_description_desired"
+        textfile="$(find marker_pose)/robots/ORCUS_desired.URDF" />
+    <param
+        name="use_gui"
+        value="$(arg gui)"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="rov_base_broadcaster" args="0.0 0.0 0.0 0 0 0 /world /world_origin 100" />
+
+</launch>
